@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from './pages/Login';
-
 import RecuperarContrasena from "./pages/RecuperarContrasena";
+import CodigoOtp from "./pages/codigoOtp";
 
 
 
@@ -17,6 +17,10 @@ function App() {
 
         {/* 2. Nueva ruta para la pantalla de recuperar contraseña */}
         <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+
+        {/* 2. Añadimos la ruta para la verificación del código OTP */}
+        <Route path="/verificar-codigo" element={<CodigoOtp />} />
+
 
       </Routes>
     </Router>

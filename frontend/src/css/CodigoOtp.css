@@ -1,0 +1,162 @@
+/* Contenedor principal con fondo blanco */
+.otp-contenedor {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Tarjeta con borde sutil gris claro */
+.otp-caja {
+  background-color: #ffffff;
+  padding: 3.5rem 2.5rem 2.5rem 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Icono de seguridad superior alineado al centro */
+.otp-icono-escudo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Textos del encabezado centrado */
+.otp-encabezado h2 {
+  margin: 0 0 2rem 0;
+  color: #000000;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.otp-encabezado p {
+  margin: 0 0 2rem 0;
+  color: #333333;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+/* Contenedor horizontal para los 6 cuadritos */
+.otp-bloques-contenedor {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  width: 100%;
+}
+
+/* Estilo individual para cada cuadro de número */
+.otp-input-cuadro {
+  width: 52px;
+  height: 56px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: #000000;
+  outline: none;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.otp-input-cuadro:focus {
+  border-color: #0059B3;
+  border-width: 1.5px;
+}
+
+/* Botón azul centralizado */
+.btn-otp-verificar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.95rem;
+  background-color: #0059B3;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin-bottom: 2rem;
+}
+
+.btn-otp-verificar:hover {
+  background-color: #00448a;
+}
+
+/* Enlace Reenviar código */
+.otp-reenviar-contenedor {
+  margin-bottom: 2.5rem;
+}
+
+.enlace-otp-reenviar {
+  color: #0059B3;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.enlace-otp-reenviar:hover {
+  text-decoration: underline;
+}
+
+/* Banner o cuadro de información inferior grisáceo */
+.otp-caja-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  background-color: #f1f5f9; /* Tono gris tenue idéntico */
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.icono-info-otp {
+  color: #64748b;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.otp-caja-info p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.mensaje-otp-alerta {
+  margin: -1rem 0 1.5rem 0;
+  font-size: 0.88rem;
+  color: #ef4444;
+}
+
+/* Responsivo para celulares pequeños */
+@media (max-width: 480px) {
+  .otp-caja {
+    padding: 2rem 1.2rem 1.5rem 1.2rem;
+  }
+  .otp-bloques-contenedor {
+    gap: 0.3rem;
+  }
+  .otp-input-cuadro {
+    width: 42px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+}
