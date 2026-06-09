@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../css/Login.css";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Link } from "react-router-dom"; // 1. Importamos Link para la navegación interna
 
 function Login() {
   const [correo, setCorreo] = useState("");
@@ -98,9 +99,10 @@ function Login() {
 
           {/* Enlace de recuperación */}
           <div className="olvido-contenedor">
-            <a href="#" className="olvido-contrasena">
+            {/* 2. Reemplazamos <a> por <Link to="..."> apuntando a tu ruta de App.jsx */}
+            <Link to="/recuperar-contrasena" className="olvido-contrasena">
               ¿Olvidaste tu contraseña?
-            </a>
+            </Link>
           </div>
 
           {/* Botón de Iniciar Sesión */}

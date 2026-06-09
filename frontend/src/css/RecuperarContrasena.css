@@ -1,0 +1,192 @@
+/* Contenedor principal con fondo BLANCO */
+.recuperar-contenedor {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Título principal exterior */
+.titulo-sistema {
+  color: #0059B3;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* Caja/Tarjeta blanca CORREGIDA: Agregamos el borde gris sutil y bordes redondeados */
+.recuperar-caja {
+  background-color: #ffffff;
+  padding: 3rem 2.5rem 2.5rem 2.5rem;
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid #e2e8f0; /* Borde gris suave para delimitar la tarjeta como en tu mockup */
+  border-radius: 8px; /* Esquinas ligeramente redondeadas */
+  box-sizing: border-box;
+}
+
+/* Encabezado interno de la tarjeta */
+.recuperar-encabezado {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.recuperar-encabezado h2 {
+  margin: 0 0 1.5rem 0;
+  color: #000000;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.recuperar-encabezado p {
+  margin: 0;
+  color: #333333;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Estructura del formulario */
+.grupo-recuperar {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+.grupo-recuperar label {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #000000;
+  margin-bottom: 0.8rem;
+  text-align: left;
+}
+
+.input-recuperar-contenedor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-recuperar-contenedor input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.8rem;
+  border: 1px solid #333333; /* Borde oscuro para el input */
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #333333;
+  background-color: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-recuperar-contenedor input::placeholder {
+  color: #94a3b8;
+}
+
+/* Icono interno */
+.icono-izquierdo-recuperar {
+  position: absolute;
+  left: 1rem;
+  color: #666666;
+  pointer-events: none;
+}
+
+/* Validaciones */
+.input-recuperar-contenedor input.valido {
+  border-color: #10b981;
+}
+
+.input-recuperar-contenedor input.invalido {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+/* Botón de envío azul plano con flecha */
+.btn-recuperar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.95rem;
+  background-color: #0059B3;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.btn-recuperar:hover {
+  background-color: #00448a;
+}
+
+.icono-boton-derecho {
+  display: flex;
+  align-items: center;
+}
+
+/* Línea divisoria gris tenue */
+.divisor-recuperar {
+  border: 0;
+  height: 1px;
+  width: 100%;
+  background-color: #cccccc;
+  margin: 2.5rem 0 2rem 0;
+}
+
+/* Enlace inferior Volver al login centrado */
+.volver-login-contenedor {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.enlace-volver {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #0059B3;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.enlace-volver:hover {
+  text-decoration: underline;
+}
+
+.mensaje-recuperar {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: #374151;
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 440px) {
+  .titulo-sistema {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+  .recuperar-caja {
+    padding: 2rem 1rem 1.5rem 1rem;
+  }
+  .recuperar-encabezado p br {
+    display: none;
+  }
+}
