@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Login from './pages/Login';
 import RecuperarContrasena from "./pages/RecuperarContrasena";
 import CodigoOtp from "./pages/codigoOtp";
+import RestablecerContrasena from "./pages/RestablecerContrasena";
 
 
 
@@ -21,6 +22,8 @@ function App() {
         {/* 2. Añadimos la ruta para la verificación del código OTP */}
         <Route path="/verificar-codigo" element={<CodigoOtp />} />
 
+        {/* 2. Añadimos la ruta para la creación de la nueva contraseña */}
+        <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
       </Routes>
     </Router>

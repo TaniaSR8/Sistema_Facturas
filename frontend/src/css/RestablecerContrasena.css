@@ -1,0 +1,184 @@
+/* Contenedor completo con fondo blanco */
+.restablecer-contenedor {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 1rem 1.5rem; /* Reducido para evitar empujar la tarjeta hacia abajo */
+  box-sizing: border-box;
+}
+
+/* Tarjeta optimizada: Redujimos los paddings verticales */
+.restablecer-caja {
+  background-color: #ffffff;
+  padding: 2rem 2.5rem 2rem 2.5rem; /* Compactado de 3.5rem a 2rem */
+  width: 100%;
+  max-width: 460px; /* Un pelín más esbelta */
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* Encabezado: Reducido el margen inferior */
+.restablecer-encabezado {
+  text-align: left;
+  margin-bottom: 1.8rem; /* Compactado de 2.5rem a 1.8rem */
+}
+
+.restablecer-encabezado h2 {
+  margin: 0 0 0.8rem 0; /* Menos espacio abajo del título */
+  color: #000000;
+  font-size: 1.65rem; /* Letra ligeramente más balanceada */
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.restablecer-encabezado p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+/* Campos de entrada */
+.grupo-restablecer {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.2rem; /* Compactado de 1.5rem a 1.2rem */
+}
+
+.grupo-restablecer label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.input-restablecer-contenedor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-restablecer-campo {
+  width: 100%;
+  padding: 0.8rem 2.8rem 0.8rem 1rem; /* Entradas ligeramente más esbeltas */
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #000000;
+  background-color: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-restablecer-campo:focus {
+  border-color: #0059B3;
+}
+
+.input-restablecer-campo::placeholder {
+  color: #94a3b8;
+}
+
+/* Icono del ojo */
+.restablecer-icono-ojo {
+  position: absolute;
+  right: 1rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+/* Caja gris de requisitos de contraseña: Más compacta */
+.restablecer-requisitos-caja {
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  padding: 0.85rem 1rem; /* Más ajustada */
+  margin-bottom: 1.8rem; /* Compactado de 2.5rem a 1.8rem */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.requisito-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.requisito-linea.cumplido {
+  color: #0f172a;
+}
+
+.requisito-linea.cumplido svg {
+  color: #10b981;
+}
+
+/* Botón azul plano grande */
+.btn-restablecer-guardar {
+  width: 100%;
+  padding: 0.85rem; /* Ajustado de 1rem a 0.85rem */
+  background-color: #0059B3;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin-bottom: 1.2rem;
+}
+
+.btn-restablecer-guardar:hover {
+  background-color: #00448a;
+}
+
+/* Enlace inferior */
+.restablecer-volver-contenedor {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.enlace-restablecer-volver {
+  font-size: 0.95rem;
+  color: #0059B3;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.enlace-restablecer-volver:hover {
+  text-decoration: underline;
+}
+
+.mensaje-restablecer-alerta {
+  margin-bottom: 0.8rem;
+  font-size: 0.85rem;
+  color: #ef4444;
+  text-align: center;
+}
+
+/* Responsivo para dispositivos móviles */
+@media (max-width: 480px) {
+  .restablecer-contenedor {
+    padding: 1rem;
+  }
+  .restablecer-caja {
+    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  }
+  .restablecer-encabezado p br {
+    display: none;
+  }
+}
