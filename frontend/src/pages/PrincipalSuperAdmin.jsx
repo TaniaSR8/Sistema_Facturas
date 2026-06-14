@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import '../css/PrincipalSuperAdmin.css';
 import ModalAgregarUsuario from '../components/ModalAgregarUsuario';
+import ModalCerrarSesion from '../components/ModalCerrarSesion';
 
 
 
@@ -9,6 +10,9 @@ function PrincipalSuperAdmin() {
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false); // Estado para el menú hamburguesa
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+
 
   const registrosPorPagina = 7;
 
@@ -41,6 +45,14 @@ function PrincipalSuperAdmin() {
         activo: nuevoUsuario.estado === 'activo'
       }
     ]);
+  };
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem('token');
+    sessionStorage.clear();
+    setModalCerrarSesionAbierto(false);
+    alert("Sesión cerrada con éxito");
+    window.location.reload();
   };
 
   const empleadosFiltrados = empleados.filter(emp =>
@@ -78,7 +90,7 @@ function PrincipalSuperAdmin() {
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
-          <button className="sidebar-logout">
+          <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
             <div className="logout-icon"></div>
             Cerrar Sesión
           </button>
@@ -209,11 +221,16 @@ function PrincipalSuperAdmin() {
           </footer>
         </main>
       </div>
-     {/* AQUÍ se renderiza el modal cuando isModalOpen sea true */}
+      {/* AQUÍ se renderiza el modal cuando isModalOpen sea true */}
       <ModalAgregarUsuario 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onRegister={handleAgregarUsuario}
+      />
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion}
       />
     </div>
   );
