@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import '../css/PrincipalSuperAdmin.css';
+import ModalAgregarUsuario from '../components/ModalAgregarUsuario';
+
+
+
 function PrincipalSuperAdmin() {
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false); // Estado para el menú hamburguesa
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const registrosPorPagina = 7;
 
   const [empleados, setEmpleados] = useState([
@@ -21,6 +26,21 @@ function PrincipalSuperAdmin() {
     setEmpleados(empleados.map(emp => 
       emp.id === id ? { ...emp, activo: !emp.activo } : emp
     ));
+  };
+
+  const handleAgregarUsuario = (nuevoUsuario) => {
+    setEmpleados(prev => [
+      ...prev,
+      {
+        id: prev.length > 0 ? Math.max(...prev.map(e => e.id)) + 1 : 1,
+        num: nuevoUsuario.noEmpleado ? `#${nuevoUsuario.noEmpleado}` : `#2026-${Math.floor(Math.random() * 90) + 10}`,
+        nombre: nuevoUsuario.nombre,
+        rfc: nuevoUsuario.rfc,
+        correo: nuevoUsuario.correo,
+        rol: nuevoUsuario.rol.toUpperCase(),
+        activo: nuevoUsuario.estado === 'activo'
+      }
+    ]);
   };
 
   const empleadosFiltrados = empleados.filter(emp =>
@@ -81,7 +101,9 @@ function PrincipalSuperAdmin() {
                 }}
               />
             </div>
-            <button className="btn-agregar">+ Agregar</button>
+            <button className="btn-agregar" onClick={() => setIsModalOpen(true)}>
+                + Agregar
+              </button>
           </header>
 
           {/* TABLA CON ENFOQUE PROPORCIONAL EXACTO */}
@@ -187,6 +209,12 @@ function PrincipalSuperAdmin() {
           </footer>
         </main>
       </div>
+     {/* AQUÍ se renderiza el modal cuando isModalOpen sea true */}
+      <ModalAgregarUsuario 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onRegister={handleAgregarUsuario}
+      />
     </div>
   );
 }
