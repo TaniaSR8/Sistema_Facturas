@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../css/PrincipalSuperAdmin.css';
 import ModalAgregarUsuario from '../components/ModalAgregarUsuario';
 import ModalCerrarSesion from '../components/ModalCerrarSesion';
@@ -6,6 +7,7 @@ import ModalCerrarSesion from '../components/ModalCerrarSesion';
 
 
 function PrincipalSuperAdmin() {
+  const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false); // Estado para el menú hamburguesa
@@ -82,11 +84,11 @@ function PrincipalSuperAdmin() {
 
         {/* El menú recibe la clase 'show' cuando menuAbierto es true */}
         <nav className={`sidebar-menu ${menuAbierto ? 'show' : ''}`}>
-          <button className="menu-item active">
+          <button className="menu-item active" onClick={() => navigate('/usuarios')}>
             <div className="menu-icon usuarios"></div>
             Gestión de Usuarios
           </button>
-          <button className="menu-item">
+          <button className="menu-item" onClick={() => navigate('/perfil')}>
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
