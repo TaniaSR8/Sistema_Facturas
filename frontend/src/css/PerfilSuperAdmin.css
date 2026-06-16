@@ -184,6 +184,15 @@
   margin-right: 8px;
 }
 
+.dot-inactive {
+  height: 10px;
+  width: 10px;
+  background-color: #9CA3AF;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
 /* ACCIONES GRID (BOTONES AZULES) */
 .actions-grid {
   display: grid;

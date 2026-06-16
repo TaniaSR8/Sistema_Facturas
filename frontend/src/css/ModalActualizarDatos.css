@@ -1,0 +1,277 @@
+.actualizar-datos-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px 16px; /* Mantiene un margen libre arriba y abajo para que no pegue a los bordes de la pantalla */
+}
+
+.actualizar-datos-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 540px; /* Más ancho, tal como lo solicitó el usuario */
+  max-height: calc(100vh - 48px); /* Evita que el modal sea más alto que la pantalla */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  animation: modalFadeIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Encabezado Azul Claro / Celeste */
+.actualizar-datos-content .modal-header {
+  background-color: #E6F4F8;
+  padding: 18px 24px;
+  border-bottom: 1px solid #D9E6EB;
+  flex-shrink: 0;
+}
+
+.actualizar-datos-content .modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #2C3E50;
+  letter-spacing: -0.01em;
+}
+
+/* Contenido del formulario */
+.actualizar-datos-content form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Espaciado cómodo y limpio */
+  overflow-y: auto;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.actualizar-datos-content .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.actualizar-datos-content .form-group.full-width {
+  width: 100%;
+}
+
+.actualizar-datos-content .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px; /* Alineación perfecta y espaciada del grid */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.actualizar-datos-content label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4A5568;
+}
+
+.actualizar-datos-content input,
+.actualizar-datos-content select {
+  width: 100%; /* Estira el campo al 100% de su columna sin desbordar */
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  color: #2D3748;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  height: 44px; /* Altura estilizada y cómoda */
+  box-sizing: border-box; /* Previene el scroll horizontal al incluir padding en el cálculo del ancho */
+}
+
+.actualizar-datos-content input::placeholder {
+  color: #A0AEC0;
+}
+
+.actualizar-datos-content input:focus,
+.actualizar-datos-content select:focus {
+  border-color: #0056B3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+}
+
+/* Campos deshabilitados */
+.actualizar-datos-content input.disabled-input {
+  background-color: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #4A5568;
+  font-weight: 500;
+  cursor: not-allowed;
+}
+
+/* Contenedor personalizado para select con flecha de dropdown */
+.select-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.select-container select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+}
+
+.select-container::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #718096;
+  border-bottom: 2px solid #718096;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+/* Caja informativa color menta */
+.actualizar-datos-content .info-box-modal {
+  background: #E6FAF9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.actualizar-datos-content .info-box-modal span {
+  color: #0A6A69;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.actualizar-datos-content .info-icon {
+  color: #0A6A69;
+  flex-shrink: 0;
+}
+
+/* Caja de mensajes de error de la API */
+.error-message-modal {
+  background-color: #FFF5F5;
+  border: 1px solid #FEB2B2;
+  color: #C53030;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Botones de acción */
+.actualizar-datos-content .modal-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.actualizar-datos-content .btn-cancel,
+.actualizar-datos-content .btn-save {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.actualizar-datos-content .btn-cancel {
+  background: #ffffff;
+  border: 1.5px solid #0056B3;
+  color: #0056B3;
+}
+
+.actualizar-datos-content .btn-cancel:hover {
+  background: rgba(0, 86, 179, 0.04);
+}
+
+.actualizar-datos-content .btn-cancel:disabled,
+.actualizar-datos-content .btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actualizar-datos-content .btn-save {
+  background: #0056B3;
+  border: 1.5px solid #0056B3;
+  color: #ffffff;
+}
+
+.actualizar-datos-content .btn-save:hover {
+  background: #004494;
+  border-color: #004494;
+}
+
+/* Responsividad */
+@media (max-width: 560px) {
+  .actualizar-datos-content .row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .actualizar-datos-content {
+    max-width: 100%;
+  }
+
+  .actualizar-datos-content .modal-actions {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 360px) {
+  .actualizar-datos-content .modal-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .actualizar-datos-content .btn-cancel,
+  .actualizar-datos-content .btn-save {
+    width: 100%;
+  }
+}

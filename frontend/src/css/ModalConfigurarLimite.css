@@ -1,0 +1,112 @@
+.configurar-limite-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.configurar-limite-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.configurar-limite-content .configurar-limite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.configurar-limite-content .boton-cerrar {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #333;
+}
+
+.configurar-limite-content .grupo-formulario {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.configurar-limite-content .entrada-con-simbolo {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 5px;
+}
+
+.configurar-limite-content .entrada-con-simbolo span {
+  margin-right: 8px;
+  color: #495057;
+  font-weight: bold;
+}
+
+.configurar-limite-content .entrada-con-simbolo input {
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+
+.configurar-limite-content .texto-ayuda {
+  color: #6c757d;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+.configurar-limite-content .caja-info-limite {
+  background: #eef6ff;
+  padding: 15px;
+  border-radius: 8px;
+  color: #0059B3;
+  font-size: 0.85rem;
+  margin: 20px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.configurar-limite-content .acciones-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.configurar-limite-content .boton-cancelar {
+  background: white;
+  border: 1px solid #0059B3;
+  color: #0059B3;
+  padding: 10px 25px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.configurar-limite-content .boton-guardar {
+  background: #0059B3;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 500px) {
+  .configurar-limite-content {
+    padding: 20px;
+  }
+}

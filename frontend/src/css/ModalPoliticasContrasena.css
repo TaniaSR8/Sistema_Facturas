@@ -1,0 +1,234 @@
+.politicas-contrasena-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px 16px;
+}
+
+.politicas-contrasena-content {
+  background: #ffffff;
+  width: 90%;
+  max-width: 700px; /* <--- Aumentado de 540px a 700px para mayor amplitud */
+  max-height: calc(100vh - 48px);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  animation: modalFadeIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Encabezado Celeste */
+.politicas-contrasena-content .modal-header {
+  background-color: #E6F4F8;
+  padding: 18px 24px;
+  border-bottom: 1px solid #D9E6EB;
+  flex-shrink: 0;
+}
+
+.politicas-contrasena-content .modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #2C3E50;
+  letter-spacing: -0.01em;
+}
+
+/* Formulario */
+.politicas-contrasena-content form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+/* Sección de la marca / Título dentro del modal */
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.brand-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0056B3; /* Color azul de la marca */
+  letter-spacing: -0.02em;
+}
+
+.politicas-contrasena-content .descripcion {
+  margin: 0;
+  color: #4A5568;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.politicas-contrasena-content .grupo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.politicas-contrasena-content .fila-doble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.politicas-contrasena-content label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Separación con el icono */
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4A5568;
+  min-height: 38px; /* Evita desalineación de inputs cuando el texto se divide en dos líneas */
+  box-sizing: border-box;
+}
+
+.label-icon {
+  color: #718096;
+  flex-shrink: 0;
+}
+
+.politicas-contrasena-content input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  color: #2D3748;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.politicas-contrasena-content input:focus {
+  border-color: #0056B3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+}
+
+.helper-text {
+  font-size: 0.78rem;
+  color: #718096; /* Color gris como en la imagen */
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Mensaje de error */
+.error-message-modal {
+  background-color: #FFF5F5;
+  border: 1px solid #FEB2B2;
+  color: #C53030;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Botones */
+.politicas-contrasena-content .acciones-modal {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.politicas-contrasena-content .boton-cancelar,
+.politicas-contrasena-content .boton-guardar {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.politicas-contrasena-content .boton-cancelar {
+  background: #ffffff;
+  border: 1.5px solid #0056B3;
+  color: #0056B3;
+}
+
+.politicas-contrasena-content .boton-cancelar:hover {
+  background: rgba(0, 86, 179, 0.04);
+}
+
+.politicas-contrasena-content .boton-cancelar:disabled,
+.politicas-contrasena-content .boton-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.politicas-contrasena-content .boton-guardar {
+  background: #0056B3;
+  border: 1.5px solid #0056B3;
+  color: #ffffff;
+}
+
+.politicas-contrasena-content .boton-guardar:hover {
+  background: #004494;
+  border-color: #004494;
+}
+
+/* Responsividad */
+@media (max-width: 540px) {
+  .politicas-contrasena-content .fila-doble {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .politicas-contrasena-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .politicas-contrasena-content .acciones-modal {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+}
