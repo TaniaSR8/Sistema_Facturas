@@ -6,7 +6,6 @@ import ModalCerrarSesion from '../components/ModalCerrarSesion';
 import ModalActualizarDatos from '../components/ModalActualizarDatos';
 import ModalCambiarContrasena from '../components/ModalCambiarContrasena';
 import ModalPoliticasContrasena from '../components/ModalPoliticasContrasena';
-import ModalConfigurarLimite from '../components/ModalConfigurarLimite';
 
 function PerfilSuperAdmin() {
   const navigate = useNavigate();
@@ -15,7 +14,6 @@ function PerfilSuperAdmin() {
   const [modalActualizarDatosAbierto, setModalActualizarDatosAbierto] = useState(false);
   const [modalCambiarContrasenaAbierto, setModalCambiarContrasenaAbierto] = useState(false);
   const [modalPoliticasContrasenaAbierto, setModalPoliticasContrasenaAbierto] = useState(false);
-  const [modalConfigurarLimiteAbierto, setModalConfigurarLimiteAbierto] = useState(false);
 
   // Estado local para almacenar y mostrar los datos del perfil
   const [usuario, setUsuario] = useState({
@@ -186,6 +184,10 @@ function PerfilSuperAdmin() {
             <div className="menu-icon usuarios"></div>
             Gestión de Usuarios
           </button>
+          <button className="menu-item" onClick={() => navigate('/gastos')}>
+            <div className="menu-icon gastos"></div>
+            Gastos
+          </button>
           <button className="menu-item active" onClick={() => navigate('/perfil')}>
             <div className="menu-icon perfil"></div>
             Mi Perfil
@@ -273,14 +275,6 @@ function PerfilSuperAdmin() {
               <button
                 type="button"
                 className="action-btn"
-                onClick={() => setModalCambiarContrasenaAbierto(true)}
-              >
-                <div className="btn-icon pass-icon"></div>
-                Cambiar Contraseña
-              </button>
-              <button
-                type="button"
-                className="action-btn"
                 onClick={() => setModalPoliticasContrasenaAbierto(true)}
               >
                 <div className="btn-icon policy-icon"></div>
@@ -289,10 +283,10 @@ function PerfilSuperAdmin() {
               <button
                 type="button"
                 className="action-btn"
-                onClick={() => setModalConfigurarLimiteAbierto(true)}
+                onClick={() => setModalCambiarContrasenaAbierto(true)}
               >
-                <div className="btn-icon limit-icon"></div>
-                Configurar límite de facturación empresarial
+                <div className="btn-icon pass-icon"></div>
+                Cambiar Contraseña
               </button>
             </div>
           </section>
@@ -326,11 +320,7 @@ function PerfilSuperAdmin() {
         alGuardar={handleGuardarPoliticas}
       />
 
-      <ModalConfigurarLimite
-        estaAbierto={modalConfigurarLimiteAbierto}
-        alCerrar={() => setModalConfigurarLimiteAbierto(false)}
-        limiteActual=""
-      />
+      {/* El límite se configura ahora en la pantalla de Gastos */}
     </div>
   );
 }

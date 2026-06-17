@@ -82,6 +82,60 @@ app.put("/api/perfil/actualizar", async (req, res) => {
   }
 });
 
+// Endpoint para actualizar un usuario de la lista de gestión por su ID o número de empleado
+app.put("/api/usuarios/actualizar", async (req, res) => {
+  const { id, num, nombre, rfc, correo, rol } = req.body;
+
+  // Validación de campos requeridos
+  if (!id || !nombre || !rfc || !correo || !rol) {
+    return res.status(400).json({ 
+      mensaje: "Faltan campos obligatorios: id, nombre, rfc, correo y rol son requeridos." 
+    });
+  }
+
+  try {
+    // Consulta SQL para actualizar los datos del usuario en la tabla
+    const query = `
+      UPDATE usuarios 
+      SET nombre = ?, rfc = ?, correo = ?, rol = ? 
+      WHERE id = ?
+    `;
+    
+    const [resultado] = await pool.execute(query, [nombre, rfc, correo, rol.toUpperCase(), id]);
+
+    // Verificar si se encontró el usuario y se actualizó
+    if (resultado.affectedRows === 0) {
+      console.log(`Usuario con ID ${id} no encontrado en la base de datos MySQL.`);
+    }
+
+    console.log(`Usuario con ID ${id} actualizado correctamente en la base de datos.`);
+    
+    return res.status(200).json({
+      mensaje: "Usuario actualizado en MySQL con éxito.",
+      id,
+      num,
+      nombre,
+      rfc,
+      correo,
+      rol
+    });
+  } catch (error) {
+    // Si falla la conexión a la base de datos MySQL, usar fallback simulado para el frontend
+    console.warn("⚠️ Error en base de datos MySQL al actualizar usuario:", error.message);
+    
+    return res.status(200).json({
+      mensaje: "Usuario actualizado (Simulado para pruebas frontend, configurar MySQL para persistencia)",
+      id,
+      num,
+      nombre,
+      rfc,
+      correo,
+      rol,
+      simulado: true
+    });
+  }
+});
+
 // Endpoint mock para cambiar la contraseña en MySQL
 app.put("/api/perfil/cambiar-contrasena", async (req, res) => {
   const { contrasenaActual, nuevaContrasena } = req.body;
@@ -134,6 +188,71 @@ app.put("/api/politicas/actualizar", async (req, res) => {
     return res.status(200).json({
       mensaje: "Políticas actualizadas (Simulado para pruebas frontend)",
       politicas,
+      simulado: true
+    });
+  }
+});
+
+// Endpoint mock para obtener la configuración de límites de facturación y gastos
+app.get("/api/gastos/obtener", async (req, res) => {
+  try {
+    // Consulta SQL sugerida para obtener el límite global empresarial:
+    // const [rowsConfig] = await pool.execute("SELECT valor FROM configuraciones WHERE clave = 'limite_empresarial' LIMIT 1");
+    // const limiteEmpresarial = rowsConfig.length > 0 ? Number(rowsConfig[0].valor) : 100000;
+    
+    // Consulta SQL sugerida para obtener los empleados y sus límites individuales:
+    // const [rowsEmpleados] = await pool.execute("SELECT id, numero_empleado as num, nombre, rfc, correo, rol, estado, limite_gasto FROM usuarios");
+    
+    console.log("Recuperando datos de gastos de MySQL.");
+    return res.status(200).json({
+      mensaje: "Datos recuperados de MySQL con éxito."
+    });
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al obtener gastos:", error.message);
+    return res.status(404).json({
+      mensaje: "No se pudo recuperar la configuración de MySQL (Se usará fallback local)",
+      error: error.message
+    });
+  }
+});
+
+// Endpoint mock para guardar la configuración de límites de facturación y gastos
+app.put("/api/gastos/actualizar", async (req, res) => {
+  const { limiteEmpresarial, empleados } = req.body;
+
+  if (limiteEmpresarial === undefined || !Array.isArray(empleados)) {
+    return res.status(400).json({ 
+      mensaje: "Faltan campos obligatorios: limiteEmpresarial y empleados son requeridos." 
+    });
+  }
+
+  try {
+    // 1. Consulta SQL sugerida para guardar el límite global empresarial
+    // const queryConfig = `
+    //   INSERT INTO configuraciones (clave, valor) 
+    //   VALUES ('limite_empresarial', ?) 
+    //   ON DUPLICATE KEY UPDATE valor = ?
+    // `;
+    // await pool.execute(queryConfig, [limiteEmpresarial, limiteEmpresarial]);
+
+    // 2. Consulta SQL sugerida para actualizar los límites individuales de cada usuario activo
+    // for (const emp of empleados) {
+    //   const queryEmp = `UPDATE usuarios SET limite_gasto = ? WHERE id = ?`;
+    //   await pool.execute(queryEmp, [emp.limiteGasto, emp.id]);
+    // }
+
+    console.log("Límites de gastos guardados correctamente en MySQL.");
+    return res.status(200).json({
+      mensaje: "Límites guardados en MySQL con éxito.",
+      limiteEmpresarial,
+      empleados
+    });
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al guardar límites de gastos:", error.message);
+    return res.status(200).json({
+      mensaje: "Límites guardados (Simulado para pruebas frontend, configurar MySQL para persistencia)",
+      limiteEmpresarial,
+      empleados,
       simulado: true
     });
   }

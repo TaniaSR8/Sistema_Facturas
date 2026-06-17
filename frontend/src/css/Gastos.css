@@ -1,0 +1,329 @@
+/* ==========================================================================
+   ESTILOS PARA PANTALLA DE CONTROL DE GASTOS
+   ========================================================================== */
+
+/* Sección de configuración de límite global */
+.gastos-config-section {
+  margin-bottom: 2rem;
+}
+
+.config-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 1.8rem;
+  border-left: 5px solid #0059B3; /* Azul primario corporativo */
+}
+
+.config-card-header h3 {
+  font-size: 1.25rem;
+  color: #1A2530;
+  margin: 0 0 0.4rem 0;
+  font-weight: 700;
+}
+
+.config-card-header .subtitle {
+  font-size: 0.9rem;
+  color: #7A8B9E;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Entrada de límite global con símbolo */
+.input-group-limit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-group-limit label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1A2530;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.currency-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 350px;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1A2530;
+}
+
+.currency-input-wrapper input {
+  width: 100%;
+  height: 46px;
+  padding: 0.5rem 1rem 0.5rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1A2530;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease-in-out;
+}
+
+.currency-input-wrapper input:focus {
+  border-color: #0059B3;
+  box-shadow: 0 0 0 3px rgba(0, 89, 179, 0.12);
+}
+
+/* Dashboard informativo del presupuesto */
+.presupuesto-dashboard {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid #E2E8F0;
+}
+
+.dash-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dash-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+.dash-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1A2530;
+}
+
+.dash-value.text-danger {
+  color: #D94040 !important;
+}
+
+.dash-value.text-success {
+  color: #2E8B57 !important;
+}
+
+.dash-value.text-primary {
+  color: #0059B3 !important;
+}
+
+/* Barra de progreso de asignación */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #2E8B57; /* Verde cuando está correcto */
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+.progress-bar-fill.exceeded {
+  background-color: #D94040; /* Rojo si excede */
+}
+
+/* Banner de error por presupuesto excedido */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #FFF5F5;
+  border: 1px solid #FEB2B2;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  color: #C53030;
+  animation: slideDown 0.25s ease-out;
+}
+
+.error-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.error-message {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Controles de la tabla y entrada del límite del usuario */
+.select-users-header {
+  margin-bottom: 1.2rem;
+  align-items: flex-end;
+}
+
+.table-title-container h3 {
+  font-size: 1.15rem;
+  color: #1A2530;
+  margin: 0 0 0.3rem 0;
+  font-weight: 700;
+}
+
+.table-title-container .table-subtitle {
+  font-size: 0.9rem;
+  color: #7A8B9E;
+  margin: 0;
+}
+
+.cell-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 140px;
+}
+
+.cell-currency {
+  position: absolute;
+  left: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.user-limit-input {
+  width: 100%;
+  height: 36px;
+  padding: 0.3rem 0.5rem 0.3rem 1.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1A2530;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s ease-in-out;
+}
+
+.user-limit-input:focus {
+  border-color: #0059B3;
+  box-shadow: 0 0 0 2px rgba(0, 89, 179, 0.1);
+}
+
+/* Acciones en el pie de la tabla */
+.table-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.spacer-footer {
+  flex: 1;
+}
+
+.btn-guardar-gastos {
+  background-color: #0059B3;
+  color: #ffffff;
+  border: none;
+  padding: 0.8rem 1.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 89, 179, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-guardar-gastos:hover:not(:disabled) {
+  background-color: #004488;
+  box-shadow: 0 6px 14px rgba(0, 89, 179, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-guardar-gastos:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-guardar-gastos:disabled {
+  background-color: #CBD5E1;
+  color: #94A3B8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.empty-table-row {
+  text-align: center;
+  padding: 2.5rem !important;
+  color: #64748B;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividad para la pantalla de Gastos */
+@media (max-width: 768px) {
+  .presupuesto-dashboard {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  
+  .dash-item {
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 0.8rem;
+  }
+  
+  .dash-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .currency-input-wrapper {
+    max-width: 100%;
+  }
+
+  .config-card {
+    padding: 1.2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .select-users-header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 1rem;
+  }
+  
+  .table-footer-actions {
+    flex-direction: column;
+    gap: 1.2rem;
+    align-items: stretch;
+  }
+  
+  .btn-guardar-gastos {
+    width: 100%;
+    text-align: center;
+  }
+}

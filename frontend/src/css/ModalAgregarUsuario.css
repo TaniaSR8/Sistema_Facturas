@@ -82,6 +82,9 @@
 
 @media (max-width: 650px) {
   .modal-content { width: 95%; }
+  .form-grid { grid-template-columns: 1fr; gap: 15px; }
+  .modal-actions { flex-direction: column-reverse; gap: 10px; }
+  .btn-cancelar, .btn-registrar { width: 100%; }
 }
 
 .error-text {

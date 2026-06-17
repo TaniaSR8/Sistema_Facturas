@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import '../css/PrincipalSuperAdmin.css';
 import ModalAgregarUsuario from '../components/ModalAgregarUsuario';
 import ModalCerrarSesion from '../components/ModalCerrarSesion';
+import ModalEditarUsuario from '../components/ModalEditarUsuario';
 
 
 
@@ -13,20 +14,57 @@ function PrincipalSuperAdmin() {
   const [menuAbierto, setMenuAbierto] = useState(false); // Estado para el menú hamburguesa
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
 
 
   const registrosPorPagina = 7;
 
-  const [empleados, setEmpleados] = useState([
-    { id: 1, num: '#2026-04', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true },
-    { id: 2, num: '#2026-58', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true },
-    { id: 3, num: '#2026-59', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true },
-    { id: 4, num: '#2026-60', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true },
-    { id: 5, num: '#2026-61', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true },
-    { id: 6, num: '#2026-62', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true },
-    { id: 7, num: '#2026-63', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true }
-  ]);
+  // Inicializar empleados desde localStorage o con los valores por defecto
+  const [empleados, setEmpleados] = useState(() => {
+    const guardados = localStorage.getItem('empleados');
+    if (guardados) {
+      try {
+        return JSON.parse(guardados);
+      } catch (e) {
+        console.error("Error al analizar empleados de localStorage:", e);
+      }
+    }
+    return [
+      { id: 1, num: '#2026-04', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 15000 },
+      { id: 2, num: '#2026-58', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 12000 },
+      { id: 3, num: '#2026-59', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 10000 },
+      { id: 4, num: '#2026-60', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 20000 },
+      { id: 5, num: '#2026-61', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 8000 },
+      { id: 6, num: '#2026-62', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 5000 },
+      { id: 7, num: '#2026-63', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 18000 }
+    ];
+  });
+
+  // Guardar en localStorage cuando cambien los empleados
+  useEffect(() => {
+    localStorage.setItem('empleados', JSON.stringify(empleados));
+  }, [empleados]);
+
+  // Hook listo para cargar desde backend al montar el componente
+  useEffect(() => {
+    const cargarGastosDesdeServidor = async () => {
+      try {
+        const respuesta = await fetch('http://localhost:3001/api/gastos/obtener');
+        if (respuesta.ok) {
+          const resultado = await respuesta.json();
+          // Cuando el backend esté listo y retorne los empleados actualizados de la base de datos:
+          if (resultado.empleados) {
+            setEmpleados(resultado.empleados);
+          }
+        }
+      } catch (error) {
+        console.log("Servidor backend no disponible para obtener gastos. Usando persistencia local (localStorage).");
+      }
+    };
+    cargarGastosDesdeServidor();
+  }, []);
 
   const controlarToggle = (id) => {
     setEmpleados(empleados.map(emp => 
@@ -44,9 +82,70 @@ function PrincipalSuperAdmin() {
         rfc: nuevoUsuario.rfc,
         correo: nuevoUsuario.correo,
         rol: nuevoUsuario.rol.toUpperCase(),
-        activo: nuevoUsuario.estado === 'activo'
+        activo: nuevoUsuario.estado === 'activo',
+        limiteGasto: 10000 // Monto permitido inicial por defecto para nuevos usuarios
       }
     ]);
+  };
+
+  const handleEditarUsuario = async (usuarioModificado) => {
+    try {
+      // Intentar enviar la petición al backend en caso de que esté activo
+      const respuesta = await fetch('http://localhost:3001/api/usuarios/actualizar', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: usuarioModificado.id,
+          num: usuarioModificado.num,
+          nombre: usuarioModificado.nombre,
+          rfc: usuarioModificado.rfc,
+          correo: usuarioModificado.correo,
+          rol: usuarioModificado.rol.toUpperCase()
+        })
+      });
+
+      if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({}));
+        throw new Error(errorData.mensaje || 'Error al actualizar el usuario en el servidor.');
+      }
+
+      const resultado = await respuesta.json();
+      
+      // Actualizar el estado local con la respuesta del servidor MySQL
+      setEmpleados(prev => prev.map(emp => 
+        emp.id === usuarioModificado.id ? {
+          ...emp,
+          nombre: resultado.nombre || usuarioModificado.nombre,
+          rfc: resultado.rfc || usuarioModificado.rfc,
+          correo: resultado.correo || usuarioModificado.correo,
+          rol: (resultado.rol || usuarioModificado.rol).toUpperCase()
+        } : emp
+      ));
+      
+      alert('¡Usuario actualizado con éxito en el servidor!');
+
+    } catch (error) {
+      console.warn(
+        '⚠️ El backend o la base de datos MySQL aún no están configurados/activos.\n' +
+        'Detalle del error:', error.message, '\n' +
+        'Aplicando actualización local simulada para probar el diseño del frontend.'
+      );
+
+      // Simular la actualización exitosa localmente
+      setEmpleados(prev => prev.map(emp => 
+        emp.id === usuarioModificado.id ? {
+          ...emp,
+          nombre: usuarioModificado.nombre,
+          rfc: usuarioModificado.rfc,
+          correo: usuarioModificado.correo,
+          rol: usuarioModificado.rol.toUpperCase()
+        } : emp
+      ));
+
+      alert('¡Usuario actualizado con éxito! (Simulado localmente, backend no activo)');
+    }
   };
 
   const handleCerrarSesion = () => {
@@ -87,6 +186,10 @@ function PrincipalSuperAdmin() {
           <button className="menu-item active" onClick={() => navigate('/usuarios')}>
             <div className="menu-icon usuarios"></div>
             Gestión de Usuarios
+          </button>
+          <button className="menu-item" onClick={() => navigate('/gastos')}>
+            <div className="menu-icon gastos"></div>
+            Gastos
           </button>
           <button className="menu-item" onClick={() => navigate('/perfil')}>
             <div className="menu-icon perfil"></div>
@@ -156,7 +259,14 @@ function PrincipalSuperAdmin() {
                       </td>
                       <td className="col-acciones">
                         <div className="action-buttons">
-                          <button className="btn-action edit" title="Editar usuario"></button>
+                          <button 
+                            className="btn-action edit" 
+                            title="Editar usuario"
+                            onClick={() => {
+                              setUsuarioSeleccionado(emp);
+                              setIsEditModalOpen(true);
+                            }}
+                          ></button>
                           <label className="switch">
                             <input 
                               type="checkbox" 
@@ -233,6 +343,15 @@ function PrincipalSuperAdmin() {
         isOpen={modalCerrarSesionAbierto} 
         onClose={() => setModalCerrarSesionAbierto(false)} 
         onConfirm={handleCerrarSesion}
+      />
+      <ModalEditarUsuario 
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setUsuarioSeleccionado(null);
+        }}
+        usuario={usuarioSeleccionado}
+        onSave={handleEditarUsuario}
       />
     </div>
   );
