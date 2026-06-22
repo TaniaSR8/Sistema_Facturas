@@ -1,29 +1,34 @@
+require("dotenv").config(); //  carga variables de .env
 const express = require("express");
+const cors = require("cors");
+
+
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-app.use(express.json());
-
-// Importar rutas
-const usuariosRoutes = require('./routes/usuarios');
-app.use(usuariosRoutes);
+app.use(cors());            //  habilita comunicación con frontend
+app.use(express.json());    //  parsea JSON en requests
 
 // Importar conexión
-const pool = require('./db');
+const pool = require("./src/config/db");
+
+// Importar rutas
+const usuariosRoutes = require("./src/routes/usuarios");
+app.use("/api/usuarios", usuariosRoutes);
 
 // Ruta raíz
 app.get("/", (req, res) => {
-  res.send("Servidor backend funcionando");
+  res.send("Servidor backend funcionando ");
 });
 
 // Ruta de prueba para verificar conexión
-app.get('/test-db', async (req, res) => {
+app.get("/test-db", async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT 1 + 1 AS result');
+    const [rows] = await pool.query("SELECT 1 + 1 AS result");
     res.json(rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error en la conexión a la BD' });
+    res.status(500).json({ error: "Error en la conexión a la BD" });
   }
 });
 
