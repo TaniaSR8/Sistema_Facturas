@@ -29,7 +29,22 @@ const register = async (req, res) => {
         return res.status(400).json({ error: "Todos los campos son obligatorios" });
     }
 
+    //  Aquí va la validación de formato de correo
+    const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!correoRegex.test(correo)) {
+        return res.status(400).json({ error: "Formato de correo inválido" });
+    }
+
+
     try {
+
+        //  Validación de rol SUPERADMIN
+        if (rol === "SUPERADMIN") {
+            const [rows] = await pool.query("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'SUPERADMIN'");
+            if (rows[0].total > 0) {
+                return res.status(403).json({ error: "No está permitido registrar un SUPERADMIN adicional" });
+            }
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const nuevoUsuario = {
@@ -45,7 +60,7 @@ const register = async (req, res) => {
 
         const id = await crearUsuario(nuevoUsuario);
 
-        // 👇 Devolvemos todos los datos, pero ocultamos el password
+        //  Devolvemos todos los datos, pero ocultamos el password
         const usuarioRespuesta = { id, ...nuevoUsuario };
         delete usuarioRespuesta.password;
 
