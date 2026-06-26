@@ -3,6 +3,18 @@ import "../css/Login.css";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Link } from "react-router-dom"; // 1. Importamos Link para la navegación interna
+import api from "../axios"; // Importo AXIOS
+import { useNavigate } from "react-router-dom";
+
+const obtenerRolDesdeToken = (token) => {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.rol || null;
+  } catch {
+    return null;
+  }
+};
 
 function Login() {
   const [correo, setCorreo] = useState("");
@@ -12,15 +24,52 @@ function Login() {
 
   const [tocadoCorreo, setTocadoCorreo] = useState(false);
   const [tocadoContrasena, setTocadoContrasena] = useState(false);
+  const navigate = useNavigate();
 
-  const manejarSubmit = (e) => {
-    e.preventDefault();
-    if (correo.trim() === "" || contrasena.trim() === "") {
-      setMensaje("Los campos no pueden estar vacíos");
+
+  const manejarSubmit = async (e) => {
+  e.preventDefault();
+
+  if (correo.trim() === "" || contrasena.trim() === "") {
+    setMensaje("Los campos no pueden estar vacíos");
+    return;
+  }
+
+  try {
+    const response = await api.post("/usuarios/login", {
+      correo: correo,
+      contrasena: contrasena,
+    });
+
+    const token = response.data.token;
+    if (!token) {
+      setMensaje("No se recibió token del servidor");
       return;
     }
-    console.log("Correo:", correo, "Contraseña:", contrasena);
-  };
+
+    const rol = (response.data.rol || obtenerRolDesdeToken(token) || "").toUpperCase();
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("rol", rol);
+    localStorage.setItem("correo", correo);
+
+    if (rol === "SUPERADMIN") {
+      navigate("/usuarios");
+    } else if (rol === "ADMINISTRADOR") {
+      navigate("/perfil");
+    } else {
+      setMensaje("Tu rol no tiene acceso al sistema");
+    }
+  } catch (error) {
+    setMensaje(
+      error.response?.data?.error ||
+        error.response?.data?.mensaje ||
+        error.response?.data?.message ||
+        "Credenciales inválidas"
+    );
+  }
+};
+
 
   return (
     <div className="login-contenedor">

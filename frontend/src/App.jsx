@@ -6,26 +6,47 @@ import Login from './pages/Login';
 import RecuperarContrasena from "./pages/RecuperarContrasena";
 import CodigoOtp from "./pages/codigoOtp";
 import RestablecerContrasena from "./pages/RestablecerContrasena";
+import RutaPrivada from "./components/RutaPrivada"; // 👈 Importa tu componente
+
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Redirigir la raíz a login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Redirigir la raíz a login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-
-
-       {/* Pantallas de autenticación */}
+        {/* Pantallas de autenticación */}
         <Route path="/login" element={<Login />} />
         <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
         <Route path="/verificar-codigo" element={<CodigoOtp />} />
         <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
-        {/* Pantallas de SuperAdmin */}
-        <Route path="/usuarios" element={<PrincipalSuperAdmin />} />
-        <Route path="/gastos" element={<Gastos />} />
-        <Route path="/perfil" element={<PerfilSuperAdmin />} />
+        {/* Pantallas de SuperAdmin protegidas */}
+        <Route
+          path="/usuarios"
+          element={
+            <RutaPrivada>
+              <PrincipalSuperAdmin />
+            </RutaPrivada>
+          }
+        />
+        <Route
+          path="/gastos"
+          element={
+            <RutaPrivada>
+              <Gastos />
+            </RutaPrivada>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <RutaPrivada>
+              <PerfilSuperAdmin />
+            </RutaPrivada>
+          }
+        />
       </Routes>
     </Router>
   );

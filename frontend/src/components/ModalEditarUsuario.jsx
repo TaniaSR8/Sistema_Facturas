@@ -7,6 +7,7 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
   const [rfc, setRfc] = useState('');
   const [correo, setCorreo] = useState('');
   const [rol, setRol] = useState('');
+  const [telefono, setTelefono] = useState('');
 
   // Estado de carga y errores
   const [errors, setErrors] = useState({});
@@ -19,6 +20,7 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
       setRfc(usuario.rfc || '');
       setCorreo(usuario.correo || '');
       setRol(usuario.rol ? usuario.rol.toUpperCase() : 'USUARIO');
+      setTelefono(usuario.telefono || '');
       setErrors({});
     }
   }, [isOpen, usuario]);
@@ -28,30 +30,33 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
   const handleSave = async () => {
     const tempErrors = {};
 
-    // 1. Validación de Nombre Completo
+    // Validaciones
     if (!nombre.trim()) {
       tempErrors.nombre = 'El nombre completo es obligatorio';
     } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre)) {
       tempErrors.nombre = 'El nombre solo debe contener letras y espacios';
     }
 
-    // 2. Validación de RFC Empleado
     if (!rfc.trim()) {
       tempErrors.rfc = 'El RFC es obligatorio';
     } else if (!/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i.test(rfc)) {
       tempErrors.rfc = 'Formato de RFC inválido (debe tener 12 o 13 caracteres válidos)';
     }
 
-    // 3. Validación de Correo
     if (!correo.trim()) {
       tempErrors.correo = 'El correo electrónico es obligatorio';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
       tempErrors.correo = 'Formato de correo electrónico inválido';
     }
 
-    // 4. Validación de Rol
     if (!rol) {
       tempErrors.rol = 'Debe seleccionar un rol';
+    }
+
+    if (!telefono.trim()) {
+      tempErrors.telefono = 'El teléfono es obligatorio';
+    } else if (!/^\d{7,10}$/.test(telefono)) {
+      tempErrors.telefono = 'El teléfono debe tener entre 7 y 10 dígitos';
     }
 
     setErrors(tempErrors);
@@ -60,12 +65,22 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
     if (Object.keys(tempErrors).length === 0) {
       setCargando(true);
       try {
+        const partesNombre = nombre.trim().split(/\s+/);
+        const primerNombre = partesNombre[0] || nombre.trim();
+        const apPaterno = partesNombre[1] || 'NA';
+        const apMaterno = partesNombre.slice(2).join(' ') || 'NA';
+
         await onSave({
           ...usuario,
-          nombre: nombre.trim(),
+          numeroEmpleado: usuario.numeroEmpleado,   // 👈 obligatorio
+          nombre: primerNombre,
+          apellidoPaterno: apPaterno,
+          apellidoMaterno: apMaterno,
           rfc: rfc.toUpperCase().trim(),
           correo: correo.trim(),
-          rol: rol.toUpperCase()
+          rol: rol.toUpperCase(),
+          telefono: telefono.trim() || "0000000000",
+          estado: usuario.estado || 'ACTIVO'
         });
         onClose();
       } catch (err) {
@@ -88,7 +103,7 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
             <label>Número de empleado</label>
             <input
               type="text"
-              value={usuario.num || ''}
+              value={usuario.numeroEmpleado || ''}
               disabled
               className="input-disabled"
             />
@@ -131,6 +146,19 @@ function ModalEditarUsuario({ isOpen, onClose, usuario, onSave }) {
               disabled={cargando}
             />
             {errors.correo && <span className="error-text-span">{errors.correo}</span>}
+          </div>
+
+          <div className="form-group-vertical">
+            <label>Teléfono*</label>
+            <input
+              type="text"
+              placeholder="Ej. 7771234567"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className={errors.telefono ? 'input-error' : ''}
+              disabled={cargando}
+            />
+            {errors.telefono && <span className="error-text-span">{errors.telefono}</span>}
           </div>
 
           <div className="form-group-vertical">

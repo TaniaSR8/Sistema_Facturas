@@ -36,7 +36,7 @@ function ModalAgregarUsuario({ isOpen, onClose, onRegister }) {
 
   if (!isOpen) return null;
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const tempErrors = {};
 
     // 1. Validación de No. Empleado
@@ -94,10 +94,9 @@ function ModalAgregarUsuario({ isOpen, onClose, onRegister }) {
 
     setErrors(tempErrors);
 
-    // Si no hay errores, llamamos a la función de registro
     if (Object.keys(tempErrors).length === 0) {
       if (onRegister) {
-        onRegister({
+        const exito = await onRegister({
           noEmpleado,
           rfc,
           nombre,
@@ -105,10 +104,12 @@ function ModalAgregarUsuario({ isOpen, onClose, onRegister }) {
           password,
           telefono: cleanTelefono,
           estado,
-          rol
+          rol,
         });
+        if (exito) onClose();
+      } else {
+        onClose();
       }
-      onClose();
     }
   };
 

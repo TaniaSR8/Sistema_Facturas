@@ -82,58 +82,170 @@ app.put("/api/perfil/actualizar", async (req, res) => {
   }
 });
 
-// Endpoint para actualizar un usuario de la lista de gestión por su ID o número de empleado
-app.put("/api/usuarios/actualizar", async (req, res) => {
-  const { id, num, nombre, rfc, correo, rol } = req.body;
+// Endpoint helper para actualizar usuario por ID
+async function actualizarUsuarioPorId(id, body, res) {
+  const {
+    nombre,
+    apellidoPaterno,
+    apellidoMaterno,
+    rfc,
+    correo,
+    rol,
+    telefono,
+    estado,
+    numeroEmpleado,
+    num
+  } = body;
 
-  // Validación de campos requeridos
-  if (!id || !nombre || !rfc || !correo || !rol) {
-    return res.status(400).json({ 
-      mensaje: "Faltan campos obligatorios: id, nombre, rfc, correo y rol son requeridos." 
-    });
-  }
+  const idNum = Number(id);
 
   try {
-    // Consulta SQL para actualizar los datos del usuario en la tabla
-    const query = `
-      UPDATE usuarios 
-      SET nombre = ?, rfc = ?, correo = ?, rol = ? 
-      WHERE id = ?
-    `;
-    
-    const [resultado] = await pool.execute(query, [nombre, rfc, correo, rol.toUpperCase(), id]);
-
-    // Verificar si se encontró el usuario y se actualizó
-    if (resultado.affectedRows === 0) {
-      console.log(`Usuario con ID ${id} no encontrado en la base de datos MySQL.`);
+    // 1. Intentar obtener los datos actuales del usuario para hacer un merge si faltan campos
+    let usuarioExistente = {};
+    try {
+      const [rows] = await pool.execute("SELECT * FROM usuarios WHERE id = ?", [idNum]);
+      if (rows.length > 0) {
+        usuarioExistente = rows[0];
+      }
+    } catch (err) {
+      console.warn("⚠️ No se pudo consultar el usuario existente de la BD:", err.message);
     }
 
-    console.log(`Usuario con ID ${id} actualizado correctamente en la base de datos.`);
-    
+    // 2. Fusionar los datos recibidos con los existentes
+    const noEmpleadoFinal = numeroEmpleado || num || usuarioExistente.numero_empleado || usuarioExistente.numeroEmpleado || "";
+    const nombreFinal = nombre !== undefined ? nombre : (usuarioExistente.nombre || "");
+    const apellidoPaternoFinal = apellidoPaterno !== undefined ? apellidoPaterno : (usuarioExistente.apellido_paterno || usuarioExistente.apellidoPaterno || "NA");
+    const apellidoMaternoFinal = apellidoMaterno !== undefined ? apellidoMaterno : (usuarioExistente.apellido_materno || usuarioExistente.apellidoMaterno || "NA");
+    const rfcFinal = rfc !== undefined ? rfc : (usuarioExistente.rfc || "");
+    const correoFinal = correo !== undefined ? correo : (usuarioExistente.correo || "");
+    const rolFinal = rol !== undefined ? rol : (usuarioExistente.rol || "USUARIO");
+    const telefonoFinal = telefono !== undefined ? telefono : (usuarioExistente.telefono || "0000000000");
+    const estadoFinal = estado !== undefined ? estado : (usuarioExistente.estado || "ACTIVO");
+
+    // 3. Ejecutar la actualización en MySQL
+    let resultado;
+    try {
+      // Intentar primero con nombres de columnas snake_case
+      const query = `
+        UPDATE usuarios 
+        SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, rfc = ?, correo = ?, rol = ?, telefono = ?, estado = ? 
+        WHERE id = ?
+      `;
+      [resultado] = await pool.execute(query, [
+        nombreFinal,
+        apellidoPaternoFinal,
+        apellidoMaternoFinal,
+        rfcFinal,
+        correoFinal,
+        rolFinal.toUpperCase(),
+        telefonoFinal,
+        estadoFinal.toUpperCase(),
+        idNum
+      ]);
+    } catch (dbError) {
+      // Si falla por columnas de apellidos, intentar con camelCase
+      if (dbError.message.includes("apellido_paterno") || dbError.message.includes("apellido_materno")) {
+        try {
+          const query = `
+            UPDATE usuarios 
+            SET nombre = ?, apellidoPaterno = ?, apellidoMaterno = ?, rfc = ?, correo = ?, rol = ?, telefono = ?, estado = ? 
+            WHERE id = ?
+          `;
+          [resultado] = await pool.execute(query, [
+            nombreFinal,
+            apellidoPaternoFinal,
+            apellidoMaternoFinal,
+            rfcFinal,
+            correoFinal,
+            rolFinal.toUpperCase(),
+            telefonoFinal,
+            estadoFinal.toUpperCase(),
+            idNum
+          ]);
+        } catch (dbError2) {
+          // Si ambos fallan, actualizar los campos estándar que sabemos que existen
+          console.warn("⚠️ Columnas de apellidos no encontradas en la tabla usuarios. Actualizando resto de campos.");
+          const query = `
+            UPDATE usuarios 
+            SET nombre = ?, rfc = ?, correo = ?, rol = ?, telefono = ?, estado = ? 
+            WHERE id = ?
+          `;
+          [resultado] = await pool.execute(query, [
+            nombreFinal,
+            rfcFinal,
+            correoFinal,
+            rolFinal.toUpperCase(),
+            telefonoFinal,
+            estadoFinal.toUpperCase(),
+            idNum
+          ]);
+        }
+      } else {
+        throw dbError;
+      }
+    }
+
+    if (resultado && resultado.affectedRows === 0) {
+      console.log(`Usuario con ID ${idNum} no encontrado en la base de datos MySQL.`);
+    }
+
+    console.log(`Usuario con ID ${idNum} actualizado correctamente en la base de datos.`);
+
     return res.status(200).json({
       mensaje: "Usuario actualizado en MySQL con éxito.",
-      id,
-      num,
-      nombre,
-      rfc,
-      correo,
-      rol
+      id: idNum,
+      num: noEmpleadoFinal,
+      numeroEmpleado: noEmpleadoFinal,
+      nombre: nombreFinal,
+      apellidoPaterno: apellidoPaternoFinal,
+      apellidoMaterno: apellidoMaternoFinal,
+      rfc: rfcFinal,
+      correo: correoFinal,
+      rol: rolFinal.toUpperCase(),
+      telefono: telefonoFinal,
+      estado: estadoFinal.toUpperCase()
     });
+
   } catch (error) {
-    // Si falla la conexión a la base de datos MySQL, usar fallback simulado para el frontend
     console.warn("⚠️ Error en base de datos MySQL al actualizar usuario:", error.message);
     
-    return res.status(200).json({
+    // Fallback simulado para pruebas frontend sin sobreescribir datos no enviados
+    const responseData = {
       mensaje: "Usuario actualizado (Simulado para pruebas frontend, configurar MySQL para persistencia)",
-      id,
-      num,
-      nombre,
-      rfc,
-      correo,
-      rol,
+      id: idNum,
       simulado: true
-    });
+    };
+
+    if (numeroEmpleado !== undefined || num !== undefined) {
+      const val = numeroEmpleado || num;
+      responseData.num = val;
+      responseData.numeroEmpleado = val;
+    }
+    if (nombre !== undefined) responseData.nombre = nombre;
+    if (apellidoPaterno !== undefined) responseData.apellidoPaterno = apellidoPaterno;
+    if (apellidoMaterno !== undefined) responseData.apellidoMaterno = apellidoMaterno;
+    if (rfc !== undefined) responseData.rfc = rfc;
+    if (correo !== undefined) responseData.correo = correo;
+    if (rol !== undefined) responseData.rol = rol.toUpperCase();
+    if (telefono !== undefined) responseData.telefono = telefono;
+    if (estado !== undefined) responseData.estado = estado.toUpperCase();
+
+    return res.status(200).json(responseData);
   }
+}
+
+// Endpoint para actualizar un usuario de la lista de gestión por su ID (usado por el frontend)
+app.put("/api/usuarios/:id", async (req, res) => {
+  await actualizarUsuarioPorId(req.params.id, req.body, res);
+});
+
+// Mantener compatibilidad con llamadas antiguas que usaran /api/usuarios/actualizar pasándole el id en el body
+app.put("/api/usuarios/actualizar", async (req, res) => {
+  const id = req.body.id || req.body.numeroEmpleado || req.body.num;
+  if (!id) {
+    return res.status(400).json({ mensaje: "El ID es requerido para actualizar." });
+  }
+  await actualizarUsuarioPorId(id, req.body, res);
 });
 
 // Endpoint mock para cambiar la contraseña en MySQL
