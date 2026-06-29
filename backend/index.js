@@ -15,6 +15,10 @@ const pool = require("./src/config/db");
 const usuariosRoutes = require("./src/routes/usuarios");
 app.use("/api/usuarios", usuariosRoutes);
 
+// Importar rutas de gastos
+const gastosRoutes = require("./src/routes/gastos");
+app.use("/api/gastos", gastosRoutes);
+
 // Ruta raíz
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando ");
