@@ -95,25 +95,6 @@ useEffect(() => {
 
   
 
-  // Hook listo para cargar desde backend al montar el componente
-  useEffect(() => {
-    const cargarGastosDesdeServidor = async () => {
-      try {
-        const respuesta = await fetch('http://localhost:3001/api/gastos/obtener');
-        if (respuesta.ok) {
-          const resultado = await respuesta.json();
-          // Cuando el backend esté listo y retorne los empleados actualizados de la base de datos:
-          if (resultado.empleados) {
-            setEmpleados(resultado.empleados.map(mapearUsuarioBackend));
-          }
-        }
-      } catch (error) {
-        console.log("Servidor backend no disponible para obtener gastos. Usando persistencia local (localStorage).");
-      }
-    };
-    cargarGastosDesdeServidor();
-  }, []);
-
  const controlarToggle = async (id) => {
   try {
     const token = localStorage.getItem("token");

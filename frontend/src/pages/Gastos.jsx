@@ -4,135 +4,109 @@ import '../css/PrincipalSuperAdmin.css';
 import '../css/Gastos.css';
 import ModalCerrarSesion from '../components/ModalCerrarSesion';
 
+import axios from 'axios';
+
 function Gastos() {
   const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+// Estado para el límite empresarial
+  const [limiteEmpresarial, setLimiteEmpresarial] = useState(0);
 
-  // 1. Estado para el Límite de Facturación Empresarial (Global)
-  const [limiteEmpresarial, setLimiteEmpresarial] = useState(() => {
-    const guardado = localStorage.getItem('limiteFacturacionEmpresarial');
-    return guardado ? Number(guardado) : 100000; // Valor por defecto de $100,000
-  });
+  // Estado para empleados
+  const [empleados, setEmpleados] = useState([]);
 
-  // 2. Estado para los Empleados (se comparte con Gestión de Usuarios usando localStorage)
-  const [empleados, setEmpleados] = useState(() => {
-    const guardados = localStorage.getItem('empleados');
-    if (guardados) {
-      try {
-        return JSON.parse(guardados);
-      } catch (e) {
-        console.error("Error al cargar empleados en Gastos:", e);
-      }
-    }
-    // Fallback si no existen empleados guardados
-    return [
-      { id: 1, num: '#2026-04', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 15000 },
-      { id: 2, num: '#2026-58', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 12000 },
-      { id: 3, num: '#2026-59', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 10000 },
-      { id: 4, num: '#2026-60', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 20000 },
-      { id: 5, num: '#2026-61', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 8000 },
-      { id: 6, num: '#2026-62', nombre: 'Ana Flores García', rfc: 'GFRL8848HJK4', correo: 'nombre@ejemplo.com', rol: 'USUARIO', activo: true, limiteGasto: 5000 },
-      { id: 7, num: '#2026-63', nombre: 'José Valdez García', rfc: 'MERL80412H34', correo: 'nombre@ejemplo.com', rol: 'ADMINISTRADOR', activo: true, limiteGasto: 18000 }
-    ];
-  });
+      // 🔹 Cargar datos desde el backend
+      useEffect(() => {
+        const cargarDatos = async () => {
+          try {
+            const respuesta = await axios.get('http://localhost:3001/api/gastos/obtener');
 
-  // 3. Cargar datos del Servidor Backend si está disponible (MySQL)
-  useEffect(() => {
-    const cargarDatosDesdeBackend = async () => {
-      try {
-        const respuesta = await fetch('http://localhost:3001/api/gastos/obtener');
-        if (respuesta.ok) {
-          const resultado = await respuesta.json();
-          // Si el backend tuviera ya la conexión lista y retornara los datos, actualizaríamos:
-          if (resultado.limiteEmpresarial) {
-            setLimiteEmpresarial(Number(resultado.limiteEmpresarial));
+            // 🔹 Normalizar datos al cargar
+            setLimiteEmpresarial(Number(respuesta.data.limiteEmpresarial));
+            setEmpleados(respuesta.data.empleados.map(emp => ({
+              ...emp,
+              num: emp.numeroEmpleado,
+              limiteGasto: emp.limiteGasto ? Number(emp.limiteGasto) : 0
+            })));
+
+          } catch (error) {
+            console.error("Error al cargar presupuesto", error);
           }
-          if (resultado.empleados) {
-            setEmpleados(resultado.empleados);
-          }
-        }
-      } catch (error) {
-        console.log("Servidor backend no disponible para obtener gastos. Usando persistencia local (localStorage).");
-      }
-    };
-    cargarDatosDesdeBackend();
-  }, []);
+        };
+        cargarDatos();
+      }, []);
 
-  // 4. Filtrar únicamente los usuarios activos para mostrarlos en la tabla
-  const usuariosActivos = empleados.filter(emp => emp.activo);
 
-  // 5. Filtrar por búsqueda (nombre, correo o rfc)
+  // 3. Filtrado y paginación (aquí va tu bloque)
+  const usuariosActivos = empleados.filter(emp => emp.rol === 'USUARIO' && emp.estado === 'ACTIVO');
   const usuariosFiltrados = usuariosActivos.filter(emp =>
-    emp.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    emp.correo.toLowerCase().includes(busqueda.toLowerCase()) ||
-    emp.rfc.toLowerCase().includes(busqueda.toLowerCase())
+    (emp.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (emp.correo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (emp.rfc || '').toLowerCase().includes(busqueda.toLowerCase())
   );
-
-  // Paginación
   const registrosPorPagina = 5;
   const indiceUltimoRegistro = paginaActual * registrosPorPagina;
   const indicePrimerRegistro = indiceUltimoRegistro - registrosPorPagina;
   const registrosPaginaActual = usuariosFiltrados.slice(indicePrimerRegistro, indiceUltimoRegistro);
   const totalPaginas = Math.ceil(usuariosFiltrados.length / registrosPorPagina);
 
-  // 6. Cambiar el límite de gasto de un usuario en el estado local
+  // 🔹 Cambiar límite de gasto
   const handleCambioLimiteUsuario = (id, nuevoValor) => {
     const valorNumerico = nuevoValor === '' ? 0 : Number(nuevoValor);
-    setEmpleados(prev => prev.map(emp => 
+    setEmpleados(prev => prev.map(emp =>
       emp.id === id ? { ...emp, limiteGasto: valorNumerico } : emp
     ));
   };
 
-  // 7. Calcular la suma total de los límites individuales asignados
-  const sumaTotalAsignada = usuariosActivos.reduce((sum, emp) => sum + (emp.limiteGasto || 0), 0);
+  // 🔹 Calcular suma total
+ const sumaTotalAsignada = usuariosActivos.reduce(
+  (sum, emp) => sum + (Number(emp.limiteGasto) || 0),
+  0
+);
 
-  // 8. Validar si excede el límite empresarial global
   const esExcedido = sumaTotalAsignada > limiteEmpresarial;
-  const montoDiferencia = sumaTotalAsignada - limiteEmpresarial;
 
-  // 9. Guardar los límites en la base de datos (Backend) y localmente (LocalStorage)
+      // 🔹 Diferencia entre lo asignado y el límite
+    const montoDiferencia = sumaTotalAsignada - limiteEmpresarial;
+
+
+  // 🔹 Guardar cambios en backend
   const handleGuardarCambios = async () => {
-    if (esExcedido) {
-      alert("Error: No se pueden guardar los cambios porque el total asignado excede el límite empresarial.");
-      return;
+  if (esExcedido) {
+    alert("Error: El total asignado excede el límite empresarial.");
+    return;
+  }
+
+  try {
+    // 1. Guardar cambios en el backend
+    await axios.put('http://localhost:3001/api/gastos/actualizar', {
+      limiteEmpresarial: Number(limiteEmpresarial),
+      empleados: empleados
+    });
+
+    // 2. Volver a pedir los datos actualizados
+    const respuesta = await axios.get('http://localhost:3001/api/gastos/obtener');
+    setLimiteEmpresarial(Number(respuesta.data.limiteEmpresarial));
+    setEmpleados(respuesta.data.empleados.map(emp => ({
+        ...emp,
+        num: emp.numeroEmpleado,   // 👈 aquí se conserva el No. Empleado
+        limiteGasto: emp.limiteGasto ? Number(emp.limiteGasto) : 0
+      })));
+
+    // 3. Confirmar al usuario
+    alert("¡Límites actualizados con éxito en la Base de Datos MySQL!");
+  } catch (error) {
+    if (error.response) {
+      alert(`Error: ${error.response.data.message}`);
+    } else {
+      alert("⚠️ Falló la conexión con el Backend MySQL.");
     }
+  }
+};
 
-    try {
-      // Guardar localmente
-      localStorage.setItem('empleados', JSON.stringify(empleados));
-      localStorage.setItem('limiteFacturacionEmpresarial', String(limiteEmpresarial));
-
-      // Enviar cambios al backend Express y MySQL
-      const respuesta = await fetch('http://localhost:3001/api/gastos/actualizar', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          limiteEmpresarial: Number(limiteEmpresarial),
-          empleados: empleados
-        })
-      });
-
-      if (!respuesta.ok) {
-        throw new Error("Respuesta de servidor no exitosa.");
-      }
-
-      const data = await respuesta.json();
-      if (data.simulado) {
-        alert("¡Configuración guardada con éxito! (Simulado en Local Storage)");
-      } else {
-        alert("¡Límites actualizados con éxito en la Base de Datos MySQL!");
-      }
-
-    } catch (error) {
-      console.warn("⚠️ Falló la conexión con el Backend MySQL. Los cambios se guardaron localmente en el navegador.", error);
-      alert("¡Cambios guardados con éxito localmente! (Backend no activo)");
-    }
-  };
 
   const handleCerrarSesion = () => {
     localStorage.removeItem('token');
@@ -141,6 +115,8 @@ function Gastos() {
     alert("Sesión cerrada con éxito");
     window.location.reload();
   };
+
+  
 
   return (
     <div className="panel-container">
@@ -200,35 +176,44 @@ function Gastos() {
                     <input 
                       id="input-global-limit"
                       type="number" 
-                      placeholder="100000"
-                      value={limiteEmpresarial}
+                      min="0"
+                      placeholder="Ingrese monto"
+                      value={limiteEmpresarial === 0 ? '' : limiteEmpresarial}
                       onChange={(e) => {
-                        const val = e.target.value === '' ? '' : Number(e.target.value);
+                        const val = e.target.value === '' ? 0 : Number(e.target.value);
                         setLimiteEmpresarial(val);
                       }}
                     />
+
                   </div>
                 </div>
 
                 {/* Dashboard del Estado del Presupuesto */}
+              {/* Dashboard del Estado del Presupuesto */}
                 <div className="presupuesto-dashboard">
                   <div className="dash-item">
                     <span className="dash-label">Límite Global</span>
-                    <span className="dash-value">${Number(limiteEmpresarial).toLocaleString()}</span>
+                    <span className="dash-value">
+                      ${Number(limiteEmpresarial).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   </div>
+
                   <div className="dash-item">
                     <span className="dash-label">Total Asignado</span>
                     <span className={`dash-value ${esExcedido ? 'text-danger' : 'text-success'}`}>
-                      ${sumaTotalAsignada.toLocaleString()}
+                      ${(Number(sumaTotalAsignada) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
+
                   <div className="dash-item">
                     <span className="dash-label">{esExcedido ? 'Excedido' : 'Disponible'}</span>
                     <span className={`dash-value ${esExcedido ? 'text-danger' : 'text-primary'}`}>
-                      ${Math.abs(limiteEmpresarial - sumaTotalAsignada).toLocaleString()}
+                      ${(Math.abs(Number(limiteEmpresarial) - Number(sumaTotalAsignada)) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
+
+
 
                 {/* Barra de progreso visual */}
                 <div className="progress-bar-container">
@@ -300,18 +285,24 @@ function Gastos() {
                           <span className={`badge-rol ${emp.rol.toLowerCase()}`}>{emp.rol}</span>
                         </td>
                         <td className="col-estado">
-                          <span className="badge-estado activo">ACTIVO</span>
+                          <span className={`badge-estado ${emp.estado.toLowerCase()}`}>
+                          {emp.estado}
+                        </span>
+
                         </td>
                         <td className="col-monto">
                           <div className="cell-input-wrapper">
                             <span className="cell-currency">$</span>
                             <input 
                               type="number" 
+                              min="0"
                               className="user-limit-input"
-                              value={emp.limiteGasto === undefined ? '' : emp.limiteGasto} 
+                              value={emp.limiteGasto === 0 ? '' : emp.limiteGasto} 
                               onChange={(e) => handleCambioLimiteUsuario(emp.id, e.target.value)}
                               placeholder="0"
                             />
+
+
                           </div>
                         </td>
                       </tr>

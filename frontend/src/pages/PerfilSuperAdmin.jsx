@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/PrincipalSuperAdmin.css';
 import '../css/PerfilSuperAdmin.css';
@@ -6,6 +6,7 @@ import ModalCerrarSesion from '../components/ModalCerrarSesion';
 import ModalActualizarDatos from '../components/ModalActualizarDatos';
 import ModalCambiarContrasena from '../components/ModalCambiarContrasena';
 import ModalPoliticasContrasena from '../components/ModalPoliticasContrasena';
+import api, { obtenerMensajeErrorApi } from '../axios';
 
 function PerfilSuperAdmin() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ function PerfilSuperAdmin() {
     nombre: 'Tania Sánchez Reyes',
     numeroEmpleado: 'EMP-99234',
     correo: 'nombre@ejemplo.com',
-    estado: 'Activo',
+    estado: 'ACTIVO',
     telefono: '', // Teléfono inicial de prueba vacío como en la imagen
     fechaCreacion: '25/05/2026'
   });
@@ -35,6 +36,33 @@ function PerfilSuperAdmin() {
     minMinusculas: 1
   });
 
+  // Cargar perfil al montar la pantalla
+  useEffect(() => {
+    const cargarPerfil = async () => {
+      try {
+        const correoLogged = localStorage.getItem("correo");
+        if (!correoLogged) return;
+
+        const respuesta = await api.get('/perfil', {
+          params: { correo: correoLogged }
+        });
+        
+        const data = respuesta.data;
+        setUsuario({
+          nombre: data.nombre || '',
+          numeroEmpleado: data.numeroEmpleado || '',
+          correo: data.correo || '',
+          estado: data.estado || 'ACTIVO',
+          telefono: data.telefono || '',
+          fechaCreacion: data.fechaCreacion || '25/05/2026'
+        });
+      } catch (error) {
+        console.error("Error al cargar perfil de MySQL:", error);
+      }
+    };
+    cargarPerfil();
+  }, []);
+
   const handleCerrarSesion = () => {
     localStorage.removeItem('token');
     sessionStorage.clear();
@@ -43,31 +71,18 @@ function PerfilSuperAdmin() {
     navigate('/usuarios');
   };
 
-  // Función lista para interactuar con el backend (Express y MySQL)
+  // Función para interactuar con el backend usando Axios
   const handleGuardarDatos = async (datosActualizados) => {
     try {
-      // Intentar enviar la petición al backend en caso de que esté activo
-      const respuesta = await fetch('http://localhost:3001/api/perfil/actualizar', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({
-          nombre: datosActualizados.nombreCompleto,
-          correo: datosActualizados.correo,
-          estado: datosActualizados.estado,
-          telefono: datosActualizados.telefono,
-          numeroEmpleado: datosActualizados.numeroEmpleado
-        })
+      const respuesta = await api.put('/perfil/actualizar', {
+        nombre: datosActualizados.nombreCompleto,
+        correo: datosActualizados.correo,
+        estado: datosActualizados.estado,
+        telefono: datosActualizados.telefono,
+        numeroEmpleado: datosActualizados.numeroEmpleado
       });
 
-      if (!respuesta.ok) {
-        const errorData = await respuesta.json().catch(() => ({}));
-        throw new Error(errorData.mensaje || 'Error al actualizar los datos en el servidor.');
-      }
-
-      const resultado = await respuesta.json();
+      const resultado = respuesta.data;
       
       // Actualizar el estado local con la respuesta del servidor MySQL
       setUsuario({
@@ -82,14 +97,12 @@ function PerfilSuperAdmin() {
       alert('¡Datos actualizados con éxito en el servidor!');
 
     } catch (error) {
-      // Si el backend no está activo o arroja un error de red (TypeError: Failed to fetch)
       console.warn(
-        '⚠️ El backend o la base de datos MySQL aún no están configurados/activos.\n' +
-        'Detalle del error:', error.message, '\n' +
-        'Aplicando actualización local simulada para probar el diseño del frontend.'
+        '⚠️ Error al conectar con el backend MySQL:\n',
+        obtenerMensajeErrorApi(error)
       );
 
-      // Simular la actualización exitosa localmente para que el usuario pueda ver el resultado en pantalla
+      // Simular la actualización exitosa localmente
       setUsuario({
         nombre: datosActualizados.nombreCompleto,
         correo: datosActualizados.correo,
@@ -99,66 +112,38 @@ function PerfilSuperAdmin() {
         fechaCreacion: datosActualizados.fechaCreacion
       });
 
-      alert('¡Datos actualizados con éxito! (Simulado localmente, backend no activo)');
+      alert('¡Datos actualizados con éxito! (Simulado localmente)');
     }
   };
 
-  // Función lista para cambiar la contraseña interactuando con el backend
+  // Función para cambiar la contraseña usando Axios
   const handleCambiarContrasena = async (datosContrasena) => {
     try {
-      const respuesta = await fetch('http://localhost:3001/api/perfil/cambiar-contrasena', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({
-          contrasenaActual: datosContrasena.contrasenaActual,
-          nuevaContrasena: datosContrasena.nuevaContrasena
-        })
+      await api.put('/perfil/cambiar-contrasena', {
+        contrasenaActual: datosContrasena.contrasenaActual,
+        nuevaContrasena: datosContrasena.nuevaContrasena
       });
-
-      if (!respuesta.ok) {
-        const errorData = await respuesta.json().catch(() => ({}));
-        throw new Error(errorData.mensaje || 'Error al cambiar la contraseña.');
-      }
 
       alert('¡Contraseña cambiada con éxito en el servidor!');
     } catch (error) {
       console.warn(
-        '⚠️ El backend o la base de datos MySQL aún no están configurados/activos.\n' +
-        'Detalle del error:', error.message, '\n' +
-        'Simulando cambio de contraseña exitoso localmente.'
+        '⚠️ Error al cambiar la contraseña en backend:\n',
+        obtenerMensajeErrorApi(error)
       );
       alert('¡Contraseña cambiada con éxito! (Simulado localmente)');
     }
   };
 
-  // Función lista para guardar las políticas de contraseña en el servidor
+  // Función para guardar las políticas de contraseña en el servidor usando Axios
   const handleGuardarPoliticas = async (nuevasPoliticas) => {
     try {
-      const respuesta = await fetch('http://localhost:3001/api/politicas/actualizar', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify(nuevasPoliticas)
-      });
-
-      if (!respuesta.ok) {
-        const errorData = await respuesta.json().catch(() => ({}));
-        throw new Error(errorData.mensaje || 'Error al guardar las políticas.');
-      }
-
-      const resultado = await respuesta.json();
-      setPoliticas(resultado.politicas || nuevasPoliticas);
+      const respuesta = await api.put('/politicas/actualizar', nuevasPoliticas);
+      setPoliticas(respuesta.data.politicas || nuevasPoliticas);
       alert('¡Políticas de contraseña guardadas con éxito en el servidor!');
     } catch (error) {
       console.warn(
-        '⚠️ El backend o la base de datos MySQL aún no están configurados/activos.\n' +
-        'Detalle del error:', error.message, '\n' +
-        'Guardando políticas localmente en el estado del Frontend.'
+        '⚠️ Error al guardar políticas en backend:\n',
+        obtenerMensajeErrorApi(error)
       );
       setPoliticas(nuevasPoliticas);
       alert('¡Configuración de políticas guardada! (Simulado localmente)');
@@ -247,8 +232,8 @@ function PerfilSuperAdmin() {
                   <div className="check-icon"></div>
                 </div>
                 <div className="status-value">
-                  <span className={usuario.estado === 'Activo' ? 'dot-active' : 'dot-inactive'}></span>{' '}
-                  {usuario.estado === 'Activo' ? 'Activa' : 'Inactiva'}
+                  <span className={String(usuario.estado).toUpperCase() === 'ACTIVO' ? 'dot-active' : 'dot-inactive'}></span>{' '}
+                  {String(usuario.estado).toUpperCase() === 'ACTIVO' ? 'Activa' : 'Inactiva'}
                 </div>
               </div>
               <div className="status-box">

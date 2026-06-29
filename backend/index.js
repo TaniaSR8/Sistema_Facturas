@@ -2,6 +2,23 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 
+// Helper to get user email from authorization token
+function getCorreoDesdeToken(req) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return null;
+    const token = authHeader.split(" ")[1];
+    if (!token) return null;
+    const payloadParts = token.split(".");
+    if (payloadParts.length < 2) return null;
+    const decoded = Buffer.from(payloadParts[1], "base64").toString("utf-8");
+    const parsed = JSON.parse(decoded);
+    return parsed.correo || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 const app = express();
 const PORT = 3001;
 
@@ -39,19 +56,58 @@ app.put("/api/perfil/actualizar", async (req, res) => {
     });
   }
 
-  try {
-    // Consulta SQL para actualizar los datos del usuario basándose en su número de empleado
-    const query = `
-      UPDATE usuarios 
-      SET nombre = ?, correo = ?, estado = ?, telefono = ? 
-      WHERE numero_empleado = ?
-    `;
-    
-    const [resultado] = await pool.execute(query, [nombre, correo, estado, telefono, numeroEmpleado]);
+  // Dividir el nombre completo en partes para guardar en columnas separadas si existen
+  const partes = nombre.trim().split(/\s+/);
+  const nombrePila = partes[0] || nombre;
+  const apellidoPaterno = partes[1] || "NA";
+  const apellidoMaterno = partes.slice(2).join(" ") || "NA";
 
-    // Verificar si se encontró el usuario y se actualizó
-    if (resultado.affectedRows === 0) {
-      console.log(`Usuario con empleado ID ${numeroEmpleado} no encontrado. Creando simulación.`);
+  try {
+    let resultado;
+    try {
+      // Intentar actualizar con columnas snake_case
+      const query = `
+        UPDATE usuarios 
+        SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo = ?, estado = ?, telefono = ? 
+        WHERE numero_empleado = ? OR numeroEmpleado = ?
+      `;
+      [resultado] = await pool.execute(query, [
+        nombrePila,
+        apellidoPaterno,
+        apellidoMaterno,
+        correo,
+        estado,
+        telefono,
+        numeroEmpleado,
+        numeroEmpleado
+      ]);
+    } catch (dbError) {
+      // Si falla, intentar con camelCase
+      try {
+        const query = `
+          UPDATE usuarios 
+          SET nombre = ?, apellidoPaterno = ?, apellidoMaterno = ?, correo = ?, estado = ?, telefono = ? 
+          WHERE numero_empleado = ? OR numeroEmpleado = ?
+        `;
+        [resultado] = await pool.execute(query, [
+          nombrePila,
+          apellidoPaterno,
+          apellidoMaterno,
+          correo,
+          estado,
+          telefono,
+          numeroEmpleado,
+          numeroEmpleado
+        ]);
+      } catch (dbError2) {
+        // Fallback final: actualizar solo campos estándar
+        const query = `
+          UPDATE usuarios 
+          SET nombre = ?, correo = ?, estado = ?, telefono = ? 
+          WHERE numero_empleado = ? OR numeroEmpleado = ?
+        `;
+        [resultado] = await pool.execute(query, [nombre, correo, estado, telefono, numeroEmpleado, numeroEmpleado]);
+      }
     }
 
     console.log(`Usuario ${numeroEmpleado} actualizado correctamente en la base de datos.`);
@@ -305,30 +361,250 @@ app.put("/api/politicas/actualizar", async (req, res) => {
   }
 });
 
-// Endpoint mock para obtener la configuración de límites de facturación y gastos
-app.get("/api/gastos/obtener", async (req, res) => {
+// Endpoint para obtener todos los usuarios de la base de datos MySQL
+app.get("/api/usuarios", async (req, res) => {
   try {
-    // Consulta SQL sugerida para obtener el límite global empresarial:
-    // const [rowsConfig] = await pool.execute("SELECT valor FROM configuraciones WHERE clave = 'limite_empresarial' LIMIT 1");
-    // const limiteEmpresarial = rowsConfig.length > 0 ? Number(rowsConfig[0].valor) : 100000;
-    
-    // Consulta SQL sugerida para obtener los empleados y sus límites individuales:
-    // const [rowsEmpleados] = await pool.execute("SELECT id, numero_empleado as num, nombre, rfc, correo, rol, estado, limite_gasto FROM usuarios");
-    
-    console.log("Recuperando datos de gastos de MySQL.");
-    return res.status(200).json({
-      mensaje: "Datos recuperados de MySQL con éxito."
+    const [rows] = await pool.execute("SELECT * FROM usuarios");
+    const mapped = rows.map(emp => {
+      const num = emp.numero_empleado || emp.numeroEmpleado || emp.no_empleado || emp.noEmpleado || emp.num || "";
+      const apellidoPaterno = emp.apellido_paterno || emp.apellidoPaterno || "";
+      const apellidoMaterno = emp.apellido_materno || emp.apellidoMaterno || "";
+      return {
+        id: emp.id,
+        num: num,
+        numeroEmpleado: num,
+        nombre: emp.nombre || "",
+        apellidoPaterno: apellidoPaterno,
+        apellidoMaterno: apellidoMaterno,
+        rfc: emp.rfc || "",
+        correo: emp.correo || "",
+        rol: emp.rol || "",
+        estado: emp.estado || "",
+        telefono: emp.telefono || "",
+        limiteGasto: emp.limite_gasto !== undefined ? Number(emp.limite_gasto) : (emp.limiteGasto !== undefined ? Number(emp.limiteGasto) : 0)
+      };
+    });
+    console.log("Usuarios recuperados de MySQL con éxito.");
+    return res.status(200).json(mapped);
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al obtener usuarios:", error.message);
+    // Fallback simulado para desarrollo local
+    const usuariosFallback = [
+      {
+        id: 1,
+        num: "EMP001",
+        numeroEmpleado: "EMP001",
+        nombre: "Juan",
+        apellidoPaterno: "Pérez",
+        apellidoMaterno: "Gómez",
+        rfc: "PEGA900101XXX",
+        correo: "juan.perez@empresa.com",
+        rol: "ADMINISTRADOR",
+        estado: "ACTIVO",
+        telefono: "1234567890",
+        limiteGasto: 15000
+      },
+      {
+        id: 2,
+        num: "EMP002",
+        numeroEmpleado: "EMP002",
+        nombre: "María",
+        apellidoPaterno: "López",
+        apellidoMaterno: "Díaz",
+        rfc: "LODM920202YYY",
+        correo: "maria.lopez@empresa.com",
+        rol: "USUARIO",
+        estado: "ACTIVO",
+        telefono: "0987654321",
+        limiteGasto: 10000
+      },
+      {
+        id: 3,
+        num: "EMP003",
+        numeroEmpleado: "EMP003",
+        nombre: "Carlos",
+        apellidoPaterno: "Sánchez",
+        apellidoMaterno: "Ruiz",
+        rfc: "SARC850303ZZZ",
+        correo: "carlos.sanchez@empresa.com",
+        rol: "USUARIO",
+        estado: "ACTIVO",
+        telefono: "5551234567",
+        limiteGasto: 0
+      }
+    ];
+    return res.status(200).json(usuariosFallback);
+  }
+});
+
+// Endpoint para registrar nuevos usuarios en la base de datos MySQL
+app.post("/api/usuarios/register", async (req, res) => {
+  const { numeroEmpleado, nombre, apellidoPaterno, apellidoMaterno, correo, contrasena, rfc, rol, telefono, estado } = req.body;
+  
+  if (!numeroEmpleado || !nombre || !correo || !contrasena || !rfc || !rol) {
+    return res.status(400).json({ mensaje: "Faltan campos obligatorios para el registro." });
+  }
+
+  try {
+    const query = `
+      INSERT INTO usuarios 
+      (numero_empleado, nombre, apellido_paterno, apellido_materno, correo, contrasena, rfc, rol, telefono, estado, limite_gasto) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    `;
+    const [resultado] = await pool.execute(query, [
+      numeroEmpleado,
+      nombre,
+      apellidoPaterno || "NA",
+      apellidoMaterno || "NA",
+      correo,
+      contrasena,
+      rfc,
+      rol.toUpperCase(),
+      telefono || "0000000000",
+      estado ? estado.toUpperCase() : "ACTIVO"
+    ]);
+
+    console.log(`Usuario registrado en MySQL con ID: ${resultado.insertId}`);
+    return res.status(201).json({
+      mensaje: "Usuario registrado en MySQL con éxito.",
+      id: resultado.insertId,
+      numeroEmpleado,
+      nombre,
+      apellidoPaterno,
+      apellidoMaterno,
+      correo,
+      rfc,
+      rol,
+      telefono,
+      estado
     });
   } catch (error) {
-    console.warn("⚠️ Error en base de datos MySQL al obtener gastos:", error.message);
-    return res.status(404).json({
-      mensaje: "No se pudo recuperar la configuración de MySQL (Se usará fallback local)",
-      error: error.message
+    console.warn("⚠️ Error en base de datos MySQL al registrar usuario:", error.message);
+    // Fallback simulado
+    return res.status(201).json({
+      mensaje: "Usuario registrado (Simulado para pruebas frontend, configurar MySQL para persistencia)",
+      id: Math.floor(Math.random() * 1000) + 10,
+      numeroEmpleado,
+      nombre,
+      apellidoPaterno,
+      apellidoMaterno,
+      correo,
+      rfc,
+      rol,
+      telefono,
+      estado,
+      simulado: true
     });
   }
 });
 
-// Endpoint mock para guardar la configuración de límites de facturación y gastos
+// Endpoint para obtener la configuración de límites de facturación y gastos
+app.get("/api/gastos/obtener", async (req, res) => {
+  try {
+    // Consulta SQL para obtener el límite global empresarial:
+    const [rowsConfig] = await pool.execute("SELECT valor FROM configuraciones WHERE clave = 'limite_empresarial' LIMIT 1");
+    const limiteEmpresarial = rowsConfig.length > 0 ? Number(rowsConfig[0].valor) : 0;
+    
+    // Consulta SQL para obtener todos los usuarios y sus límites individuales de forma segura:
+    const [rowsEmpleados] = await pool.execute("SELECT * FROM usuarios");
+
+    const empleadosMapeados = rowsEmpleados.map(emp => {
+      const num = emp.numero_empleado || emp.numeroEmpleado || emp.no_empleado || emp.noEmpleado || emp.num || "";
+      const apellidoPaterno = emp.apellido_paterno || emp.apellidoPaterno || "";
+      const apellidoMaterno = emp.apellido_materno || emp.apellidoMaterno || "";
+      const nombreCompleto = [emp.nombre, apellidoPaterno, apellidoMaterno]
+        .filter(parte => parte && parte !== "NA")
+        .join(" ")
+        .trim();
+      const limiteGasto = emp.limite_gasto !== undefined ? emp.limite_gasto : (emp.limiteGasto !== undefined ? emp.limiteGasto : 0);
+
+      return {
+        id: emp.id,
+        num: num,
+        numeroEmpleado: num,
+        nombre: nombreCompleto || emp.nombre || "",
+        rfc: emp.rfc || "",
+        correo: emp.correo || "",
+        rol: emp.rol || "",
+        estado: emp.estado || "",
+        limiteGasto: limiteGasto ? Number(limiteGasto) : 0
+      };
+    });
+    
+    console.log("Recuperando datos de gastos de MySQL.");
+    return res.status(200).json({
+      mensaje: "Datos recuperados de MySQL con éxito.",
+      limiteEmpresarial,
+      empleados: empleadosMapeados
+    });
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al obtener gastos:", error.message);
+    
+    // Fallback simulado persistente localmente
+    const fs = require("fs");
+    const path = require("path");
+    const gastosPath = path.join(__dirname, "simulado_gastos.json");
+    
+    let globalLimit = 0;
+    let empleadosFallback = [
+      {
+        id: 1,
+        num: "EMP001",
+        numeroEmpleado: "EMP001",
+        nombre: "Juan Pérez Gómez",
+        rfc: "PEGA900101XXX",
+        correo: "juan.perez@empresa.com",
+        rol: "USUARIO",
+        estado: "ACTIVO",
+        limiteGasto: 15000
+      },
+      {
+        id: 2,
+        num: "EMP002",
+        numeroEmpleado: "EMP002",
+        nombre: "María López Díaz",
+        rfc: "LODM920202YYY",
+        correo: "maria.lopez@empresa.com",
+        rol: "USUARIO",
+        estado: "ACTIVO",
+        limiteGasto: 10000
+      },
+      {
+        id: 3,
+        num: "EMP003",
+        numeroEmpleado: "EMP003",
+        nombre: "Carlos Sánchez Ruiz",
+        rfc: "SARC850303ZZZ",
+        correo: "carlos.sanchez@empresa.com",
+        rol: "USUARIO",
+        estado: "ACTIVO",
+        limiteGasto: 0
+      }
+    ];
+
+    try {
+      if (fs.existsSync(gastosPath)) {
+        const fileContent = fs.readFileSync(gastosPath, "utf8");
+        const parsed = JSON.parse(fileContent);
+        globalLimit = parsed.limiteEmpresarial !== undefined ? parsed.limiteEmpresarial : 0;
+        if (Array.isArray(parsed.empleados)) {
+          empleadosFallback = parsed.empleados;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo leer el archivo de gastos simulado:", e.message);
+    }
+
+    return res.status(200).json({
+      mensaje: "Datos recuperados (Simulado persistentemente en local)",
+      limiteEmpresarial: globalLimit,
+      empleados: empleadosFallback,
+      simulado: true
+    });
+  }
+});
+
+// Endpoint para guardar la configuración de límites de facturación y gastos
 app.put("/api/gastos/actualizar", async (req, res) => {
   const { limiteEmpresarial, empleados } = req.body;
 
@@ -339,19 +615,19 @@ app.put("/api/gastos/actualizar", async (req, res) => {
   }
 
   try {
-    // 1. Consulta SQL sugerida para guardar el límite global empresarial
-    // const queryConfig = `
-    //   INSERT INTO configuraciones (clave, valor) 
-    //   VALUES ('limite_empresarial', ?) 
-    //   ON DUPLICATE KEY UPDATE valor = ?
-    // `;
-    // await pool.execute(queryConfig, [limiteEmpresarial, limiteEmpresarial]);
+    // 1. Guardar el límite global empresarial
+    const queryConfig = `
+      INSERT INTO configuraciones (clave, valor) 
+      VALUES ('limite_empresarial', ?) 
+      ON DUPLICATE KEY UPDATE valor = ?
+    `;
+    await pool.execute(queryConfig, [String(limiteEmpresarial), String(limiteEmpresarial)]);
 
-    // 2. Consulta SQL sugerida para actualizar los límites individuales de cada usuario activo
-    // for (const emp of empleados) {
-    //   const queryEmp = `UPDATE usuarios SET limite_gasto = ? WHERE id = ?`;
-    //   await pool.execute(queryEmp, [emp.limiteGasto, emp.id]);
-    // }
+    // 2. Actualizar los límites individuales de cada usuario activo
+    for (const emp of empleados) {
+      const queryEmp = `UPDATE usuarios SET limite_gasto = ? WHERE id = ?`;
+      await pool.execute(queryEmp, [emp.limiteGasto, emp.id]);
+    }
 
     console.log("Límites de gastos guardados correctamente en MySQL.");
     return res.status(200).json({
@@ -361,12 +637,172 @@ app.put("/api/gastos/actualizar", async (req, res) => {
     });
   } catch (error) {
     console.warn("⚠️ Error en base de datos MySQL al guardar límites de gastos:", error.message);
+    
+    // Guardar los gastos simulados de forma persistente en un archivo local
+    const fs = require("fs");
+    const path = require("path");
+    const gastosPath = path.join(__dirname, "simulado_gastos.json");
+    
+    try {
+      fs.writeFileSync(gastosPath, JSON.stringify({ limiteEmpresarial, empleados }, null, 2), "utf8");
+    } catch (fsErr) {
+      console.warn("No se pudo escribir el archivo de gastos simulado:", fsErr.message);
+    }
+
     return res.status(200).json({
-      mensaje: "Límites guardados (Simulado para pruebas frontend, configurar MySQL para persistencia)",
+      mensaje: "Límites guardados (Simulado persistentemente en local)",
       limiteEmpresarial,
       empleados,
       simulado: true
     });
+  }
+});
+
+// Endpoint para obtener el perfil de un usuario
+app.get("/api/perfil", async (req, res) => {
+  const correoToken = getCorreoDesdeToken(req);
+  const correo = req.query.correo || req.headers["correo"] || correoToken;
+  
+  if (!correo) {
+    return res.status(400).json({ mensaje: "El correo es requerido." });
+  }
+
+  try {
+    const [rows] = await pool.execute("SELECT * FROM usuarios WHERE correo = ? LIMIT 1", [correo]);
+    if (rows.length === 0) {
+      return res.status(404).json({ mensaje: "Perfil no encontrado en MySQL." });
+    }
+    const user = rows[0];
+    
+    const num = user.numero_empleado || user.numeroEmpleado || user.no_empleado || user.noEmpleado || user.num || "";
+    const apellidoPaterno = user.apellido_paterno || user.apellidoPaterno || "";
+    const apellidoMaterno = user.apellido_materno || user.apellidoMaterno || "";
+    const nombreCompleto = [user.nombre, apellidoPaterno, apellidoMaterno]
+      .filter(parte => parte && parte !== "NA")
+      .join(" ")
+      .trim();
+
+    return res.status(200).json({
+      mensaje: "Perfil obtenido de MySQL con éxito.",
+      nombre: nombreCompleto || user.nombre || "",
+      correo: user.correo,
+      numeroEmpleado: num,
+      estado: user.estado || "ACTIVO",
+      telefono: user.telefono || "",
+      fechaCreacion: user.fecha_creacion || "25/05/2026"
+    });
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al obtener perfil:", error.message);
+    
+    // Fallback simulado persistente localmente
+    const fs = require("fs");
+    const path = require("path");
+    const profilePath = path.join(__dirname, "simulado_perfil.json");
+    
+    let perfilSimulado = {
+      nombre: "Tania Sánchez Reyes",
+      numeroEmpleado: "EMP-99234",
+      correo: correo,
+      estado: "ACTIVO",
+      telefono: "5551234567",
+      fechaCreacion: "25/05/2026"
+    };
+
+    try {
+      if (fs.existsSync(profilePath)) {
+        const fileContent = fs.readFileSync(profilePath, "utf8");
+        perfilSimulado = JSON.parse(fileContent);
+        perfilSimulado.correo = correo;
+      }
+    } catch (e) {
+      console.warn("No se pudo leer el archivo de perfil simulado:", e.message);
+    }
+
+    return res.status(200).json({
+      mensaje: "Perfil obtenido (Simulado persistentemente en local)",
+      ...perfilSimulado,
+      simulado: true
+    });
+  }
+});
+
+// Endpoint para el inicio de sesión (Login)
+app.post("/api/usuarios/login", async (req, res) => {
+  const { correo, contrasena } = req.body;
+
+  if (!correo || !contrasena) {
+    return res.status(400).json({ mensaje: "El correo y la contraseña son requeridos." });
+  }
+
+  try {
+    const [rows] = await pool.execute("SELECT * FROM usuarios WHERE correo = ? LIMIT 1", [correo]);
+    if (rows.length === 0) {
+      return res.status(401).json({ mensaje: "Usuario no registrado." });
+    }
+
+    const user = rows[0];
+    
+    // Validar contraseña
+    if (user.contrasena !== contrasena && user.password !== contrasena) {
+      return res.status(401).json({ mensaje: "Contraseña incorrecta." });
+    }
+
+    // Generar mock token JWT en base64
+    const payload = {
+      id: user.id,
+      nombre: user.nombre,
+      correo: user.correo,
+      rol: user.rol || "USUARIO"
+    };
+    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const mockToken = `header.${tokenBase64}.signature`;
+
+    return res.status(200).json({
+      mensaje: "Login exitoso",
+      token: mockToken,
+      rol: user.rol || "USUARIO",
+      correo: user.correo
+    });
+  } catch (error) {
+    console.warn("⚠️ Error en base de datos MySQL al iniciar sesión:", error.message);
+    
+    // Fallback simulado de login
+    let rol = "SUPERADMIN";
+    if (correo.includes("admin")) rol = "ADMINISTRADOR";
+    
+    const payload = {
+      id: 999,
+      nombre: "Usuario Simulado",
+      correo: correo,
+      rol: rol
+    };
+    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const mockToken = `header.${tokenBase64}.signature`;
+
+    return res.status(200).json({
+      mensaje: "Login simulado con éxito (fallback)",
+      token: mockToken,
+      rol: rol,
+      correo: correo
+    });
+  }
+});
+
+// Endpoint para depurar el esquema y contenido de la tabla usuarios en MySQL
+app.get("/api/debug-db", async (req, res) => {
+  try {
+    const [rows] = await pool.execute("SELECT * FROM usuarios LIMIT 5");
+    if (rows.length === 0) {
+      return res.status(200).json({ mensaje: "La tabla usuarios está vacía o no existe." });
+    }
+    return res.status(200).json({
+      mensaje: "Columnas detectadas en usuarios:",
+      columnas: Object.keys(rows[0]),
+      ejemplo: rows[0],
+      todos: rows
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
