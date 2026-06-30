@@ -185,9 +185,13 @@ const ModalActualizarDatos = ({ estaAbierto, alCerrar, datosIniciales, alGuardar
               <label htmlFor="fechaCreacion">Fecha de Creación *</label>
               <input
                 id="fechaCreacion"
-                disabled
+                name="fechaCreacion"
+                type="text"
                 value={datosUsuario.fechaCreacion}
-                className="disabled-input"
+                onChange={manejarCambio}
+                disabled={cargando}
+                placeholder="Ej. DD/MM/AAAA"
+                required
               />
             </div>
           </div>

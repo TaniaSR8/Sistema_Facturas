@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/ModalCambiarContrasena.css';
 
-const ModalCambiarContrasena = ({ estaAbierto, alCerrar, alGuardar }) => {
+const ModalCambiarContrasena = ({ estaAbierto, alCerrar, alGuardar, politicas }) => {
   const [datosContrasena, setDatosContrasena] = useState({
     contrasenaActual: '',
     nuevaContrasena: '',
@@ -53,32 +53,46 @@ const ModalCambiarContrasena = ({ estaAbierto, alCerrar, alGuardar }) => {
       return;
     }
 
-    if (nuevaContrasena.length < 8) {
-      setMensajeError("La nueva contraseña debe tener al menos 8 caracteres.");
+    // Obtener políticas dinámicas o usar defaults
+    const {
+      longitudMinima = 8,
+      longitudMaxima = 16,
+      minNumeros = 1,
+      minEspeciales = 1,
+      minMayusculas = 1,
+      minMinusculas = 1
+    } = politicas || {};
+
+    if (nuevaContrasena.length < longitudMinima) {
+      setMensajeError(`La nueva contraseña debe tener al menos ${longitudMinima} caracteres.`);
       return;
     }
 
-    // Validar políticas básicas de contraseña:
-    // Mínimo una mayúscula, una minúscula, un número y un carácter especial
-    const tieneMinuscula = /[a-z]/.test(nuevaContrasena);
-    const tieneMayuscula = /[A-Z]/.test(nuevaContrasena);
-    const tieneNumero = /[0-9]/.test(nuevaContrasena);
-    const tieneEspecial = /[!@#\$%\^&\*\(\)_\+\-\=\[\]\{\};':",\.<>\/\?\\|`~]/.test(nuevaContrasena);
+    if (nuevaContrasena.length > longitudMaxima) {
+      setMensajeError(`La nueva contraseña no puede exceder los ${longitudMaxima} caracteres.`);
+      return;
+    }
 
-    if (!tieneMinuscula) {
-      setMensajeError("La nueva contraseña debe incluir al menos una letra minúscula.");
+    // Contar tipos de caracteres
+    const numMinusculas = (nuevaContrasena.match(/[a-z]/g) || []).length;
+    const numMayusculas = (nuevaContrasena.match(/[A-Z]/g) || []).length;
+    const numNumeros = (nuevaContrasena.match(/[0-9]/g) || []).length;
+    const numEspeciales = (nuevaContrasena.match(/[!@#\$%\^&\*\(\)_\+\-\=\[\]\{\};':",\.<>\/\?\\|`~]/g) || []).length;
+
+    if (numMinusculas < minMinusculas) {
+      setMensajeError(`La nueva contraseña debe incluir al menos ${minMinusculas} letra(s) minúscula(s).`);
       return;
     }
-    if (!tieneMayuscula) {
-      setMensajeError("La nueva contraseña debe incluir al menos una letra mayúscula.");
+    if (numMayusculas < minMayusculas) {
+      setMensajeError(`La nueva contraseña debe incluir al menos ${minMayusculas} letra(s) mayúscula(s).`);
       return;
     }
-    if (!tieneNumero) {
-      setMensajeError("La nueva contraseña debe incluir al menos un número.");
+    if (numNumeros < minNumeros) {
+      setMensajeError(`La nueva contraseña debe incluir al menos ${minNumeros} número(s).`);
       return;
     }
-    if (!tieneEspecial) {
-      setMensajeError("La nueva contraseña debe incluir al menos un carácter especial (ej. !, @, #, $).");
+    if (numEspeciales < minEspeciales) {
+      setMensajeError(`La nueva contraseña debe incluir al menos ${minEspeciales} carácter(es) especial(es) (ej. !, @, #, $).`);
       return;
     }
 
@@ -217,7 +231,7 @@ const ModalCambiarContrasena = ({ estaAbierto, alCerrar, alGuardar }) => {
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <span>
-              La contraseña debe tener mínimo 8 caracteres, incluir al menos una letra mayúscula, una letra minúscula, un número y un caracter especial (ejemplo: !, @, #, $).
+              La contraseña debe tener entre {politicas?.longitudMinima || 8} y {politicas?.longitudMaxima || 16} caracteres, incluir al menos: {politicas?.minMayusculas || 1} mayúscula(s), {politicas?.minMinusculas || 1} minúscula(s), {politicas?.minNumeros || 1} número(s) y {politicas?.minEspeciales || 1} carácter(es) especial(es) (ej. !, @, #, $).
             </span>
           </div>
 

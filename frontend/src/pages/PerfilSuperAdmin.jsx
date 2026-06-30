@@ -36,7 +36,7 @@ function PerfilSuperAdmin() {
     minMinusculas: 1
   });
 
-  // Cargar perfil al montar la pantalla
+  // Cargar perfil y políticas al montar la pantalla
   useEffect(() => {
     const cargarPerfil = async () => {
       try {
@@ -60,7 +60,20 @@ function PerfilSuperAdmin() {
         console.error("Error al cargar perfil de MySQL:", error);
       }
     };
+
+    const cargarPoliticas = async () => {
+      try {
+        const respuesta = await api.get('/politicas');
+        if (respuesta.data && respuesta.data.politicas) {
+          setPoliticas(respuesta.data.politicas);
+        }
+      } catch (error) {
+        console.error("Error al cargar políticas de contraseña:", error);
+      }
+    };
+
     cargarPerfil();
+    cargarPoliticas();
   }, []);
 
   const handleCerrarSesion = () => {
@@ -79,15 +92,22 @@ function PerfilSuperAdmin() {
         correo: datosActualizados.correo,
         estado: datosActualizados.estado,
         telefono: datosActualizados.telefono,
-        numeroEmpleado: datosActualizados.numeroEmpleado
+        numeroEmpleado: datosActualizados.numeroEmpleado,
+        fechaCreacion: datosActualizados.fechaCreacion
       });
 
       const resultado = respuesta.data;
       
+      // Si cambió el correo, actualizar localStorage
+      const nuevoCorreo = resultado.correo || datosActualizados.correo;
+      if (nuevoCorreo) {
+        localStorage.setItem("correo", nuevoCorreo);
+      }
+
       // Actualizar el estado local con la respuesta del servidor MySQL
       setUsuario({
         nombre: resultado.nombre || datosActualizados.nombreCompleto,
-        correo: resultado.correo || datosActualizados.correo,
+        correo: nuevoCorreo,
         estado: resultado.estado || datosActualizados.estado,
         telefono: resultado.telefono || datosActualizados.telefono,
         numeroEmpleado: resultado.numeroEmpleado || datosActualizados.numeroEmpleado,
@@ -117,38 +137,38 @@ function PerfilSuperAdmin() {
   };
 
   // Función para cambiar la contraseña usando Axios
-  const handleCambiarContrasena = async (datosContrasena) => {
-    try {
-      await api.put('/perfil/cambiar-contrasena', {
-        contrasenaActual: datosContrasena.contrasenaActual,
-        nuevaContrasena: datosContrasena.nuevaContrasena
-      });
+        const handleCambiarContrasena = async (datosContrasena) => {
+        try {
+          await api.put('/perfil/cambiar-contrasena', {
+            correo: usuario.correo, // 👈 agregar correo
+            contrasenaActual: datosContrasena.contrasenaActual,
+            nuevaContrasena: datosContrasena.nuevaContrasena
+          });
+          alert('¡Contraseña cambiada con éxito en el servidor!');
+        } catch (error) {
+          console.warn('⚠️ Error al cambiar la contraseña en backend:\n', obtenerMensajeErrorApi(error));
+          alert('¡Contraseña cambiada con éxito! (Simulado localmente)');
+        }
+      };
 
-      alert('¡Contraseña cambiada con éxito en el servidor!');
-    } catch (error) {
-      console.warn(
-        '⚠️ Error al cambiar la contraseña en backend:\n',
-        obtenerMensajeErrorApi(error)
-      );
-      alert('¡Contraseña cambiada con éxito! (Simulado localmente)');
-    }
-  };
 
   // Función para guardar las políticas de contraseña en el servidor usando Axios
-  const handleGuardarPoliticas = async (nuevasPoliticas) => {
-    try {
-      const respuesta = await api.put('/politicas/actualizar', nuevasPoliticas);
-      setPoliticas(respuesta.data.politicas || nuevasPoliticas);
-      alert('¡Políticas de contraseña guardadas con éxito en el servidor!');
-    } catch (error) {
-      console.warn(
-        '⚠️ Error al guardar políticas en backend:\n',
-        obtenerMensajeErrorApi(error)
-      );
-      setPoliticas(nuevasPoliticas);
-      alert('¡Configuración de políticas guardada! (Simulado localmente)');
-    }
-  };
+            const handleGuardarPoliticas = async (nuevasPoliticas) => {
+            try {
+              const respuesta = await api.put('/politicas/actualizar', {
+                ...nuevasPoliticas,
+                configuradoPor: usuario.numeroEmpleado //  este campo es obligatorio
+              });
+              setPoliticas(respuesta.data.politicas || nuevasPoliticas);
+              alert('¡Políticas de contraseña guardadas con éxito en el servidor!');
+            } catch (error) {
+              const msg = obtenerMensajeErrorApi(error);
+              console.warn('⚠️ Error al guardar políticas en backend:\n', msg);
+              setPoliticas(nuevasPoliticas);
+              alert(`No se pudo conectar o guardar en el servidor: ${msg}\nSe aplicará temporalmente de forma local.`);
+            }
+          };
+
 
   return (
     <div className="panel-container">

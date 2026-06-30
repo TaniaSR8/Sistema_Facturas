@@ -19,6 +19,87 @@ function getCorreoDesdeToken(req) {
   }
 }
 
+async function obtenerPoliticas() {
+  const defaultPoliticas = {
+    longitudMinima: 8,
+    longitudMaxima: 16,
+    minNumeros: 1,
+    minEspeciales: 1,
+    minMayusculas: 1,
+    minMinusculas: 1
+  };
+  
+  // 1. Intentar obtener de la base de datos MySQL
+  try {
+    const [rows] = await pool.execute("SELECT valor FROM configuraciones WHERE clave = 'politicas_contrasena' LIMIT 1");
+    if (rows.length > 0 && rows[0].valor) {
+      return JSON.parse(rows[0].valor);
+    }
+  } catch (err) {
+    console.warn("⚠️ No se pudieron obtener las políticas de la BD:", err.message);
+  }
+
+  // 2. Si no se encontró en la BD (o hubo error), intentar leer de la simulación local
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const politicasPath = path.join(__dirname, "simulado_politicas.json");
+    if (fs.existsSync(politicasPath)) {
+      const fileContent = fs.readFileSync(politicasPath, "utf8");
+      return JSON.parse(fileContent);
+    }
+  } catch (fsErr) {
+    console.warn("No se pudo leer el archivo de políticas simulado:", fsErr.message);
+  }
+
+  // 3. De lo contrario, retornar las políticas por defecto
+  return defaultPoliticas;
+}
+
+
+async function validarContrasenaConPoliticas(contrasena) {
+  const politicas = await obtenerPoliticas();
+  const {
+    longitudMinima = 8,
+    longitudMaxima = 16,
+    minNumeros = 1,
+    minEspeciales = 1,
+    minMayusculas = 1,
+    minMinusculas = 1
+  } = politicas;
+
+  if (!contrasena) {
+    return { valido: false, mensaje: "La contraseña es requerida." };
+  }
+  if (contrasena.length < longitudMinima) {
+    return { valido: false, mensaje: `La contraseña debe tener al menos ${longitudMinima} caracteres.` };
+  }
+  if (contrasena.length > longitudMaxima) {
+    return { valido: false, mensaje: `La contraseña no debe exceder los ${longitudMaxima} caracteres.` };
+  }
+
+  const numMinusculas = (contrasena.match(/[a-z]/g) || []).length;
+  const numMayusculas = (contrasena.match(/[A-Z]/g) || []).length;
+  const numNumeros = (contrasena.match(/[0-9]/g) || []).length;
+  const numEspeciales = (contrasena.match(/[!@#\$%\^&\*\(\)_\+\-\=\[\]\{\};':",\.<>\/\?\\|`~]/g) || []).length;
+
+  if (numMinusculas < minMinusculas) {
+    return { valido: false, mensaje: `La contraseña debe incluir al menos ${minMinusculas} letra(s) minúscula(s).` };
+  }
+  if (numMayusculas < minMayusculas) {
+    return { valido: false, mensaje: `La contraseña debe incluir al menos ${minMayusculas} letra(s) mayúscula(s).` };
+  }
+  if (numNumeros < minNumeros) {
+    return { valido: false, mensaje: `La contraseña debe incluir al menos ${minNumeros} número(s).` };
+  }
+  if (numEspeciales < minEspeciales) {
+    return { valido: false, mensaje: `La contraseña debe incluir al menos ${minEspeciales} carácter(es) especial(es) (ej. !, @, #, $).` };
+  }
+
+  return { valido: true };
+}
+
+
 const app = express();
 const PORT = 3001;
 
@@ -47,7 +128,7 @@ app.get("/", (req, res) => {
 
 // Endpoint para actualizar los datos del usuario en la base de datos MySQL
 app.put("/api/perfil/actualizar", async (req, res) => {
-  const { nombre, correo, estado, telefono, numeroEmpleado } = req.body;
+  const { nombre, correo, estado, telefono, numeroEmpleado, fechaCreacion } = req.body;
 
   // Validación de campos requeridos
   if (!nombre || !correo || !numeroEmpleado) {
@@ -65,10 +146,10 @@ app.put("/api/perfil/actualizar", async (req, res) => {
   try {
     let resultado;
     try {
-      // Intentar actualizar con columnas snake_case
+      // 1. Intentar actualizar con columnas snake_case incluyendo fecha_creacion
       const query = `
         UPDATE usuarios 
-        SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo = ?, estado = ?, telefono = ? 
+        SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, correo = ?, estado = ?, telefono = ?, fecha_creacion = ? 
         WHERE numero_empleado = ? OR numeroEmpleado = ?
       `;
       [resultado] = await pool.execute(query, [
@@ -78,15 +159,16 @@ app.put("/api/perfil/actualizar", async (req, res) => {
         correo,
         estado,
         telefono,
+        fechaCreacion || "25/05/2026",
         numeroEmpleado,
         numeroEmpleado
       ]);
     } catch (dbError) {
-      // Si falla, intentar con camelCase
       try {
+        // 2. Intentar con camelCase incluyendo fechaCreacion
         const query = `
           UPDATE usuarios 
-          SET nombre = ?, apellidoPaterno = ?, apellidoMaterno = ?, correo = ?, estado = ?, telefono = ? 
+          SET nombre = ?, apellidoPaterno = ?, apellidoMaterno = ?, correo = ?, estado = ?, telefono = ?, fechaCreacion = ? 
           WHERE numero_empleado = ? OR numeroEmpleado = ?
         `;
         [resultado] = await pool.execute(query, [
@@ -96,11 +178,12 @@ app.put("/api/perfil/actualizar", async (req, res) => {
           correo,
           estado,
           telefono,
+          fechaCreacion || "25/05/2026",
           numeroEmpleado,
           numeroEmpleado
         ]);
       } catch (dbError2) {
-        // Fallback final: actualizar solo campos estándar
+        // 3. Fallback final: actualizar solo campos estándar
         const query = `
           UPDATE usuarios 
           SET nombre = ?, correo = ?, estado = ?, telefono = ? 
@@ -118,12 +201,31 @@ app.put("/api/perfil/actualizar", async (req, res) => {
       correo,
       estado,
       telefono,
-      numeroEmpleado
+      numeroEmpleado,
+      fechaCreacion: fechaCreacion || "25/05/2026"
     });
   } catch (error) {
     // Si falla la conexión a la base de datos (por ejemplo, porque aún no se ha configurado la tabla o las credenciales)
     console.warn("⚠️ Error en base de datos MySQL:", error.message);
     console.warn("Utilizando datos simulados (fallback) para permitir pruebas en el frontend sin configurar la base de datos.");
+
+    // Guardar de forma persistente localmente
+    const fs = require("fs");
+    const path = require("path");
+    const profilePath = path.join(__dirname, "simulado_perfil.json");
+    const perfilSimulado = {
+      nombre,
+      numeroEmpleado,
+      correo,
+      estado,
+      telefono,
+      fechaCreacion: fechaCreacion || "25/05/2026"
+    };
+    try {
+      fs.writeFileSync(profilePath, JSON.stringify(perfilSimulado, null, 2), "utf8");
+    } catch (fsErr) {
+      console.warn("No se pudo escribir el archivo de perfil simulado:", fsErr.message);
+    }
 
     // Retorna una simulación exitosa para que el frontend no falle y el diseño pueda ser evaluado completamente
     return res.status(200).json({
@@ -133,10 +235,12 @@ app.put("/api/perfil/actualizar", async (req, res) => {
       estado,
       telefono,
       numeroEmpleado,
+      fechaCreacion: fechaCreacion || "25/05/2026",
       simulado: true
     });
   }
 });
+
 
 // Endpoint helper para actualizar usuario por ID
 async function actualizarUsuarioPorId(id, body, res) {
@@ -304,22 +408,46 @@ app.put("/api/usuarios/actualizar", async (req, res) => {
   await actualizarUsuarioPorId(id, req.body, res);
 });
 
-// Endpoint mock para cambiar la contraseña en MySQL
+// Endpoint para cambiar la contraseña en MySQL
 app.put("/api/perfil/cambiar-contrasena", async (req, res) => {
-  const { contrasenaActual, nuevaContrasena } = req.body;
+  const { correo, contrasenaActual, nuevaContrasena } = req.body;
 
-  if (!contrasenaActual || !nuevaContrasena) {
+  if (!contrasenaActual || !nuevaContrasena || !correo) {
     return res.status(400).json({ 
-      mensaje: "Faltan campos obligatorios: contrasenaActual y nuevaContrasena son requeridos." 
+      mensaje: "Faltan campos obligatorios: correo, contrasenaActual y nuevaContrasena son requeridos." 
     });
   }
 
+  // 1. Validar contra las políticas de contraseña globales
+  const validacion = await validarContrasenaConPoliticas(nuevaContrasena);
+  if (!validacion.valido) {
+    return res.status(400).json({ mensaje: validacion.mensaje });
+  }
+
   try {
-    // Consulta SQL sugerida (asumiendo encriptación de contraseña tipo bcrypt en el backend real)
-    // const query = `UPDATE usuarios SET contrasena = ? WHERE id = ?`;
-    // await pool.execute(query, [hashedPassword, usuarioId]);
+    // 2. Buscar usuario por correo para validar la contraseña actual
+    const [rows] = await pool.execute("SELECT * FROM usuarios WHERE correo = ? LIMIT 1", [correo]);
+    if (rows.length === 0) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado." });
+    }
+
+    const user = rows[0];
+    const dbPassword = user.contrasena || user.password;
     
-    console.log("Contraseña actualizada correctamente en la base de datos.");
+    if (dbPassword !== contrasenaActual) {
+      return res.status(400).json({ mensaje: "La contraseña actual es incorrecta." });
+    }
+
+    // 3. Actualizar la contraseña en la base de datos
+    let updateQuery;
+    if (user.contrasena !== undefined) {
+      updateQuery = "UPDATE usuarios SET contrasena = ? WHERE correo = ?";
+    } else {
+      updateQuery = "UPDATE usuarios SET password = ? WHERE correo = ?";
+    }
+    await pool.execute(updateQuery, [nuevaContrasena, correo]);
+    
+    console.log(`Contraseña actualizada correctamente en la base de datos para ${correo}.`);
     return res.status(200).json({ mensaje: "Contraseña actualizada en MySQL con éxito." });
   } catch (error) {
     console.warn("⚠️ Error en base de datos MySQL al cambiar contraseña:", error.message);
@@ -330,21 +458,51 @@ app.put("/api/perfil/cambiar-contrasena", async (req, res) => {
   }
 });
 
-// Endpoint mock para actualizar las políticas de contraseña en MySQL
+// Endpoint para obtener las políticas de contraseña en MySQL o JSON fallback
+app.get("/api/politicas", async (req, res) => {
+  try {
+    const politicas = await obtenerPoliticas();
+    return res.status(200).json({
+      mensaje: "Políticas obtenidas con éxito.",
+      politicas
+    });
+  } catch (error) {
+    return res.status(500).json({ mensaje: "Error al obtener las políticas.", error: error.message });
+  }
+});
+
+// Endpoint para actualizar las políticas de contraseña en MySQL
 app.put("/api/politicas/actualizar", async (req, res) => {
-  const politicas = req.body;
+  console.log("BODY RECEIVED IN /api/politicas/actualizar:", req.body);
+  
+  const politicas = req.body || {};
   const { longitudMinima, longitudMaxima, minNumeros, minEspeciales, minMayusculas, minMinusculas } = politicas;
 
   if (longitudMinima === undefined || longitudMaxima === undefined) {
     return res.status(400).json({ 
-      mensaje: "La longitud mínima y máxima son obligatorias." 
+      mensaje: "Faltan campos obligatorios: la longitud mínima y máxima son requeridas." 
     });
   }
 
+  // Guardar siempre de forma local simulada para consistencia local garantizada
+  const fs = require("fs");
+  const path = require("path");
+  const politicasPath = path.join(__dirname, "simulado_politicas.json");
   try {
-    // Consulta SQL sugerida
-    // const query = `UPDATE configuraciones SET valor = ? WHERE clave = 'politicas_contrasena'`;
-    // await pool.execute(query, [JSON.stringify(politicas)]);
+    fs.writeFileSync(politicasPath, JSON.stringify(politicas, null, 2), "utf8");
+    console.log("Políticas de contraseña guardadas exitosamente en simulado_politicas.json");
+  } catch (fsErr) {
+    console.warn("No se pudo escribir el archivo de políticas simulado:", fsErr.message);
+  }
+
+  try {
+    // Intentar guardar también en la tabla configuraciones de MySQL
+    const queryConfig = `
+      INSERT INTO configuraciones (clave, valor) 
+      VALUES ('politicas_contrasena', ?) 
+      ON DUPLICATE KEY UPDATE valor = ?
+    `;
+    await pool.execute(queryConfig, [JSON.stringify(politicas), JSON.stringify(politicas)]);
 
     console.log("Políticas de contraseña actualizadas en la base de datos MySQL.");
     return res.status(200).json({
@@ -354,12 +512,13 @@ app.put("/api/politicas/actualizar", async (req, res) => {
   } catch (error) {
     console.warn("⚠️ Error en base de datos MySQL al guardar políticas:", error.message);
     return res.status(200).json({
-      mensaje: "Políticas actualizadas (Simulado para pruebas frontend)",
+      mensaje: "Políticas actualizadas (Simulado persistentemente en local)",
       politicas,
       simulado: true
     });
   }
 });
+
 
 // Endpoint para obtener todos los usuarios de la base de datos MySQL
 app.get("/api/usuarios", async (req, res) => {
@@ -444,6 +603,13 @@ app.post("/api/usuarios/register", async (req, res) => {
   if (!numeroEmpleado || !nombre || !correo || !contrasena || !rfc || !rol) {
     return res.status(400).json({ mensaje: "Faltan campos obligatorios para el registro." });
   }
+
+  // Validar contraseña contra las políticas de seguridad globales
+  const validacion = await validarContrasenaConPoliticas(contrasena);
+  if (!validacion.valido) {
+    return res.status(400).json({ mensaje: validacion.mensaje });
+  }
+
 
   try {
     const query = `
@@ -669,62 +835,64 @@ app.get("/api/perfil", async (req, res) => {
 
   try {
     const [rows] = await pool.execute("SELECT * FROM usuarios WHERE correo = ? LIMIT 1", [correo]);
-    if (rows.length === 0) {
-      return res.status(404).json({ mensaje: "Perfil no encontrado en MySQL." });
-    }
-    const user = rows[0];
-    
-    const num = user.numero_empleado || user.numeroEmpleado || user.no_empleado || user.noEmpleado || user.num || "";
-    const apellidoPaterno = user.apellido_paterno || user.apellidoPaterno || "";
-    const apellidoMaterno = user.apellido_materno || user.apellidoMaterno || "";
-    const nombreCompleto = [user.nombre, apellidoPaterno, apellidoMaterno]
-      .filter(parte => parte && parte !== "NA")
-      .join(" ")
-      .trim();
+    if (rows.length > 0) {
+      const user = rows[0];
+      
+      const num = user.numero_empleado || user.numeroEmpleado || user.no_empleado || user.noEmpleado || user.num || "";
+      const apellidoPaterno = user.apellido_paterno || user.apellidoPaterno || "";
+      const apellidoMaterno = user.apellido_materno || user.apellidoMaterno || "";
+      const nombreCompleto = [user.nombre, apellidoPaterno, apellidoMaterno]
+        .filter(parte => parte && parte !== "NA")
+        .join(" ")
+        .trim();
 
-    return res.status(200).json({
-      mensaje: "Perfil obtenido de MySQL con éxito.",
-      nombre: nombreCompleto || user.nombre || "",
-      correo: user.correo,
-      numeroEmpleado: num,
-      estado: user.estado || "ACTIVO",
-      telefono: user.telefono || "",
-      fechaCreacion: user.fecha_creacion || "25/05/2026"
-    });
+      return res.status(200).json({
+        mensaje: "Perfil obtenido de MySQL con éxito.",
+        nombre: nombreCompleto || user.nombre || "",
+        correo: user.correo,
+        numeroEmpleado: num,
+        estado: user.estado || "ACTIVO",
+        telefono: user.telefono || "",
+        fechaCreacion: user.fecha_creacion || "25/05/2026"
+      });
+    } else {
+      console.log(`Usuario con correo ${correo} no encontrado en MySQL. Usando fallback de simulación.`);
+    }
   } catch (error) {
     console.warn("⚠️ Error en base de datos MySQL al obtener perfil:", error.message);
-    
-    // Fallback simulado persistente localmente
-    const fs = require("fs");
-    const path = require("path");
-    const profilePath = path.join(__dirname, "simulado_perfil.json");
-    
-    let perfilSimulado = {
-      nombre: "Tania Sánchez Reyes",
-      numeroEmpleado: "EMP-99234",
-      correo: correo,
-      estado: "ACTIVO",
-      telefono: "5551234567",
-      fechaCreacion: "25/05/2026"
-    };
-
-    try {
-      if (fs.existsSync(profilePath)) {
-        const fileContent = fs.readFileSync(profilePath, "utf8");
-        perfilSimulado = JSON.parse(fileContent);
-        perfilSimulado.correo = correo;
-      }
-    } catch (e) {
-      console.warn("No se pudo leer el archivo de perfil simulado:", e.message);
-    }
-
-    return res.status(200).json({
-      mensaje: "Perfil obtenido (Simulado persistentemente en local)",
-      ...perfilSimulado,
-      simulado: true
-    });
   }
+
+  // Fallback simulado persistente localmente
+  const fs = require("fs");
+  const path = require("path");
+  const profilePath = path.join(__dirname, "simulado_perfil.json");
+  
+  let perfilSimulado = {
+    nombre: "Tania Sánchez Reyes",
+    numeroEmpleado: "EMP-99234",
+    correo: correo,
+    estado: "ACTIVO",
+    telefono: "5551234567",
+    fechaCreacion: "25/05/2026"
+  };
+
+  try {
+    if (fs.existsSync(profilePath)) {
+      const fileContent = fs.readFileSync(profilePath, "utf8");
+      perfilSimulado = JSON.parse(fileContent);
+      perfilSimulado.correo = correo;
+    }
+  } catch (e) {
+    console.warn("No se pudo leer el archivo de perfil simulado:", e.message);
+  }
+
+  return res.status(200).json({
+    mensaje: "Perfil obtenido (Simulado persistentemente en local)",
+    ...perfilSimulado,
+    simulado: true
+  });
 });
+
 
 // Endpoint para el inicio de sesión (Login)
 app.post("/api/usuarios/login", async (req, res) => {
