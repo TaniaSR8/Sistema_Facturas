@@ -19,6 +19,15 @@ app.use("/api/usuarios", usuariosRoutes);
 const gastosRoutes = require("./src/routes/gastos");
 app.use("/api/gastos", gastosRoutes);
 
+// Importar rutas de perfil
+const perfilRoutes = require("./src/routes/perfil");
+app.use("/api/perfil", perfilRoutes);
+
+// Importar rutas de políticas de contraseña
+const politicasRoutes = require("./src/routes/politicas");
+app.use("/api/politicas", politicasRoutes);
+
+
 // Ruta raíz
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando ");

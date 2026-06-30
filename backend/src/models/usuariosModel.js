@@ -14,7 +14,7 @@ const getUsuarioByCorreo = async (correo) => {
 const crearUsuario = async (usuario) => {
     try {
         const [results] = await pool.query("INSERT INTO usuarios SET ?", usuario);
-        return results.insertId; // 👈 devuelve el ID del nuevo usuario
+        return results.insertId; //  devuelve el ID del nuevo usuario
     } catch (err) {
         console.error("Error en INSERT:", err);
         throw err;
