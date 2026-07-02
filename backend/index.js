@@ -27,6 +27,14 @@ app.use("/api/perfil", perfilRoutes);
 const politicasRoutes = require("./src/routes/politicas");
 app.use("/api/politicas", politicasRoutes);
 
+const fotosRouter = require('./src/routes/fotos');
+app.use('/api/fotos', fotosRouter);
+
+app.use('/uploads', express.static('uploads'));
+
+const facturasRoutes = require('./src/routes/facturas');
+app.use('/api/facturas', facturasRoutes);
+
 
 // Ruta raíz
 app.get("/", (req, res) => {
