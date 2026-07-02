@@ -1,0 +1,718 @@
+/* ==========================================================================
+   LAYOUT BASE Y SIDEBAR
+   (copiado del mismo sistema de diseño usado en PrincipalSuperAdmin;
+   se incluye aquí completo porque esta pantalla vive en otra rama y no
+   puede depender de ese archivo)
+   ========================================================================= */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #E6F2F7;
+  font-family: sans-serif;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+.panel-container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  flex-direction: row;
+  background-color: #E6F2F7;
+  overflow: visible;
+}
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.panel-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background-color: #0059B3;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 0;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.top-blue-bar {
+  width: 100%;
+  height: 75px;
+  background-color: #0059B3;
+  flex-shrink: 0;
+  border-left: 6px solid #E6F2F7;
+  box-sizing: border-box;
+}
+
+.panel-main {
+  flex: 1;
+  padding: 1rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: #E6F2F7;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar-top-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 1.2rem;
+  margin-bottom: 3.5rem;
+  height: 90px;
+  flex-shrink: 0;
+  border-right: none;
+}
+
+.sidebar-main-icon {
+  width: 48px;
+  height: 48px;
+  background: url("/purchase-order.png") no-repeat center / contain;
+  flex-shrink: 0;
+}
+
+.sidebar-header-text h2 {
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.3;
+  font-weight: 700;
+}
+.sidebar-header-text h1 { font-weight: 700; }
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.8rem;
+  flex: 1;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.75rem 1.2rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.menu-icon {
+  width: 22px;
+  height: 22px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.menu-item.active {
+  background-color: rgba(255, 255, 255, 0.45);
+  color: #1A2530 !important;
+  font-weight: 600;
+}
+
+.sidebar-logout {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.logout-icon {
+  width: 24px;
+  height: 24px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' /%3E%3Cpolyline points='16 17 21 12 16 7' /%3E%3Cline x1='21' y1='12' x2='9' y2='12' /%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+.hamburger-btn {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  .panel-container {
+    flex-direction: column;
+  }
+
+  .panel-sidebar {
+    width: 100%;
+    min-width: 100%;
+    padding: 0;
+    height: 75px;
+  }
+
+  .sidebar-top-wrapper {
+    margin-bottom: 0;
+    height: 100%;
+  }
+
+  .top-blue-bar {
+    display: none;
+  }
+
+  .sidebar-menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 75px;
+    left: 0;
+    width: 100%;
+    max-height: calc(100vh - 75px);
+    overflow-y: auto;
+    background-color: #0059B3;
+    padding: 1rem;
+    z-index: 100;
+    flex: none;
+  }
+
+  .sidebar-logout {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.2rem;
+  }
+
+  .sidebar-menu.show {
+    display: flex;
+  }
+
+  .hamburger-btn {
+    display: block;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+  }
+}
+
+@media (min-width: 851px) {
+  .hamburger-btn { display: none; }
+}
+
+/* ==========================================================================
+   USubirFoto — estilos propios de esta pantalla
+   ========================================================================= */
+
+/* ---------- Íconos de menú ---------- */
+.menu-icon.inicio {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10'/%3E%3C/svg%3E");
+}
+.menu-item.active .menu-icon.inicio {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10'/%3E%3C/svg%3E");
+}
+
+.menu-icon.dashboard {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Crect x='3' y='3' width='8' height='8' rx='1.5'/%3E%3Crect x='13' y='3' width='8' height='8' rx='1.5'/%3E%3Crect x='3' y='13' width='8' height='8' rx='1.5'/%3E%3Crect x='13' y='13' width='8' height='8' rx='1.5'/%3E%3C/svg%3E");
+}
+.menu-item.active .menu-icon.dashboard {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Crect x='3' y='3' width='8' height='8' rx='1.5'/%3E%3Crect x='13' y='3' width='8' height='8' rx='1.5'/%3E%3Crect x='3' y='13' width='8' height='8' rx='1.5'/%3E%3Crect x='13' y='13' width='8' height='8' rx='1.5'/%3E%3C/svg%3E");
+}
+
+.menu-icon.perfil {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'/%3E%3C/svg%3E");
+}
+.menu-item.active .menu-icon.perfil {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'/%3E%3C/svg%3E");
+}
+
+.menu-icon.facturas {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1zM9 9h6M9 13h6M9 17h4'/%3E%3C/svg%3E");
+}
+.menu-item.active .menu-icon.facturas {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1zM9 9h6M9 13h6M9 17h4'/%3E%3C/svg%3E");
+}
+
+.menu-icon.fotos {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 16l-5.5-5.5L3 20'/%3E%3C/svg%3E");
+}
+.menu-item.active .menu-icon.fotos {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 16l-5.5-5.5L3 20'/%3E%3C/svg%3E");
+}
+
+/* ---------- Barra superior con título (variante de .top-blue-bar) ---------- */
+.usf-topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  height: auto;
+  min-height: 75px;
+}
+
+.usf-topbar-titulo {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.usf-subtitulo {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #003366;
+}
+
+/* ---------- Card del formulario (mismo lenguaje visual que .table-section) ---------- */
+.usf-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.usf-alerta {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.usf-alerta--error {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.usf-alerta--exito {
+  background-color: #D1FAE5;
+  color: #059669;
+}
+
+/* ---------- Grid principal: cámara (izq) + archivo/formulario (der) ---------- */
+/* IMPORTANTE: sin align-items aquí (por defecto es "stretch"), para que
+   ambas columnas tomen la MISMA altura (la de la columna más alta, que es
+   la del formulario). Así el círculo de cámara puede centrarse verticalmente
+   dentro de ese espacio real, sin necesitar un margin-top fijo en píxeles. */
+.usf-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 1.4fr;
+  gap: 2rem;
+}
+
+.usf-columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* evita que el contenido interno fuerce overflow en la columna */
+}
+
+.usf-columna-camara {
+  min-width: 0;
+}
+
+.usf-columna-formulario {
+  min-width: 0;
+}
+
+/* Este wrapper ocupa todo el espacio vertical restante de la columna
+   (gracias a flex:1, ya que .usf-columna-camara es flex-column) y centra
+   el botón dentro de él, tanto vertical como horizontalmente. */
+.usf-camara-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.usf-etiqueta-seccion {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+
+/* ---------- Botón de cámara ---------- */
+.usf-boton-camara {
+  border: none;
+  background-color: #0059B3;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  margin: 0; /* el centrado lo hace .usf-camara-wrapper, no un margin fijo */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 89, 179, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.usf-boton-camara:hover {
+  transform: translateY(-2px);
+}
+
+.usf-boton-camara:disabled {
+  cursor: not-allowed;
+}
+
+.usf-boton-camara--desactivado {
+  background-color: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+  position: relative;
+}
+
+.usf-boton-camara--desactivado:hover {
+  transform: none;
+}
+
+.usf-boton-camara-candado {
+  position: absolute;
+  top: 18px;
+  right: 26px;
+  font-size: 1.1rem;
+}
+
+.usf-boton-camara-icono {
+  font-size: 1.8rem;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.3rem;
+}
+
+.usf-boton-camara-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.usf-boton-camara-subtitulo {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.usf-input-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Dropzone ---------- */
+.usf-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 1.2rem;
+  cursor: pointer;
+  position: relative;
+  background-color: #f8fafc;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.usf-dropzone--activo {
+  border-color: #0059B3;
+  background-color: #E6F2F7;
+}
+
+.usf-dropzone--con-preview {
+  padding: 0.5rem;
+}
+
+.usf-input-archivo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.usf-dropzone-icono {
+  font-size: 1.6rem;
+  background-color: #E5EEFF;
+  color: #0059B3;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.3rem;
+}
+
+.usf-dropzone-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #003366;
+}
+
+.usf-dropzone-subtitulo {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.usf-badge {
+  margin-top: 0.5rem;
+  background-color: #E5EEFF;
+  color: #0059B3;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+}
+
+.usf-dropzone-nota {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+.usf-preview {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.usf-quitar-archivo {
+  align-self: center;
+  margin-top: 0.6rem;
+  background: none;
+  border: none;
+  color: #DC2626;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---------- Campos del formulario ---------- */
+/* display y grid-template-columns reforzados: si en tu proyecto hay algún
+   otro estilo (framework, reset global, etc.) tocando la clase .usf-campos,
+   estas reglas se aseguran de ganar la cascada. */
+.usf-campos {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  flex-wrap: unset !important;
+  gap: 1rem 1.2rem;
+  margin-top: 1.2rem;
+}
+
+.usf-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.usf-campo--completo {
+  grid-column: 1 / -1;
+}
+
+.usf-campo label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #949daa;
+}
+
+.usf-requerido {
+  color: #DC2626;
+}
+
+.usf-campo select,
+.usf-campo input[type="text"] {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  color: #334155;
+  background-color: #ffffff;
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.usf-campo select:focus,
+.usf-campo input:focus {
+  outline: none;
+  border-color: #0059B3;
+  box-shadow: 0 0 0 3px rgba(0, 89, 179, 0.12);
+}
+
+.usf-input-monto {
+  display: flex !important;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  background-color: #ffffff;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.usf-input-monto span {
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.usf-input-monto input {
+  border: none !important;
+  padding: 0.6rem 0 !important;
+  font-size: 0.9rem;
+  width: 100%;
+  font-family: inherit;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  appearance: none !important;
+}
+
+/* Oculta las flechitas de incremento/decremento nativas del input numérico
+   (Chrome/Safari/Edge), para que se vea limpio como en el diseño */
+.usf-input-monto input::-webkit-outer-spin-button,
+.usf-input-monto input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.usf-input-monto input:focus {
+  outline: none;
+}
+
+/* ---------- Acciones ---------- */
+.usf-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.8rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.usf-btn {
+  padding: 0.65rem 1.6rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.usf-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.usf-btn--primario {
+  background-color: #0059B3;
+  color: #ffffff;
+}
+
+.usf-btn--primario:hover:not(:disabled) {
+  background-color: #003866;
+}
+
+.usf-btn--secundario {
+  background-color: #ffffff;
+  color: #0059B3;
+  border-color: #0059B3;
+}
+
+.usf-btn--secundario:hover:not(:disabled) {
+  background-color: #E6F2F7;
+}
+
+/* ==================================================
+   RESPONSIVE (coherente con los breakpoints de PrincipalSuperAdmin.css)
+   ================================================== */
+@media (max-width: 900px) {
+  .usf-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .usf-campos {
+    grid-template-columns: 1fr;
+  }
+
+  /* En una sola columna ya no hace falta estirar la altura para centrar */
+  .usf-camara-wrapper {
+    flex: none;
+  }
+}
+
+@media (max-width: 850px) {
+  /* .top-blue-bar se oculta en móvil en PrincipalSuperAdmin.css porque ahí es
+     puramente decorativo; aquí sí lleva el título "Bienvenido", así que lo
+     forzamos a mostrarse */
+  .usf-topbar.top-blue-bar {
+    display: flex;
+    padding: 0 1.2rem;
+    min-height: 60px;
+  }
+
+  .usf-topbar-titulo {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .usf-card {
+    padding: 1rem;
+  }
+
+  .usf-boton-camara {
+    width: 160px;
+    height: 160px;
+  }
+
+  .usf-acciones {
+    flex-direction: column-reverse;
+  }
+
+  .usf-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
