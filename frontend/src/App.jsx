@@ -8,6 +8,10 @@ import CodigoOtp from "./pages/codigoOtp";
 import RestablecerContrasena from "./pages/RestablecerContrasena";
 import RutaPrivada from "./components/RutaPrivada"; // 👈 Importa tu componente
 
+// 👇 Pantallas de Usuario
+import USubirFoto from "./pages/USubirFoto";
+import USubirFactura from "./pages/USubirFactura";
+
 
 function App() {
   return (
@@ -28,10 +32,10 @@ function App() {
           element={
             <RutaPrivada>
               <PrincipalSuperAdmin />
-            </RutaPrivada>
+                 </RutaPrivada>
           }
         />
-        <Route
+         <Route
           path="/gastos"
           element={
             <RutaPrivada>
@@ -44,6 +48,25 @@ function App() {
           element={
             <RutaPrivada>
               <PerfilSuperAdmin />
+            </RutaPrivada>
+          }
+        />
+
+         {/* Pantallas de Usuario protegidas */}
+        <Route
+          path="/usuario/foto-ticket"
+          element={
+            <RutaPrivada>
+              <USubirFoto />
+            </RutaPrivada>
+          }
+        />
+        
+       <Route
+          path="/usuario/factura"
+          element={
+            <RutaPrivada>
+              <USubirFactura />
             </RutaPrivada>
           }
         />
