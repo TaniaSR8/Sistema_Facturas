@@ -12,11 +12,15 @@ import RutaPrivada from "./components/RutaPrivada"; // 👈 Importa tu component
 import USubirFoto from "./pages/USubirFoto";
 import USubirFactura from "./pages/USubirFactura";
 
+import AdminFacturas from "./pages/AdminFacturas";
+import AdminValidaciones from './pages/AdminValidaciones';
+
 
 function App() {
   return (
     <Router>
       <Routes>
+
         {/* Redirigir la raíz a login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -28,17 +32,18 @@ function App() {
 
         {/* Pantallas de SuperAdmin protegidas */}
         <Route
-          path="/usuarios"
-          element={
-            <RutaPrivada>
-              <PrincipalSuperAdmin />
-                 </RutaPrivada>
-          }
-        />
-         <Route
+            path="/usuarios"
+            element={
+              <RutaPrivada rolPermitido="SUPERADMIN">
+                <PrincipalSuperAdmin />
+              </RutaPrivada>
+            }
+          />
+
+          <Route
           path="/gastos"
           element={
-            <RutaPrivada>
+            <RutaPrivada rolPermitido="SUPERADMIN">
               <Gastos />
             </RutaPrivada>
           }
@@ -46,27 +51,44 @@ function App() {
         <Route
           path="/perfil"
           element={
-            <RutaPrivada>
+            <RutaPrivada rolPermitido="SUPERADMIN">
               <PerfilSuperAdmin />
             </RutaPrivada>
           }
         />
 
-         {/* Pantallas de Usuario protegidas */}
+        {/* Pantallas de Usuario protegidas */}
         <Route
           path="/usuario/foto-ticket"
           element={
-            <RutaPrivada>
+            <RutaPrivada rolPermitido="USUARIO">
               <USubirFoto />
             </RutaPrivada>
           }
         />
-        
-       <Route
+        <Route
           path="/usuario/factura"
           element={
-            <RutaPrivada>
+            <RutaPrivada rolPermitido="USUARIO">
               <USubirFactura />
+            </RutaPrivada>
+          }
+        />
+
+        {/* Pantallas de Admin protegidas */}
+        <Route
+          path="/admin/facturas"
+          element={
+            <RutaPrivada rolPermitido="ADMIN">
+              <AdminFacturas />
+            </RutaPrivada>
+          }
+        />
+        <Route
+          path="/admin/validaciones"
+          element={
+            <RutaPrivada rolPermitido="ADMIN">
+              <AdminValidaciones />
             </RutaPrivada>
           }
         />
