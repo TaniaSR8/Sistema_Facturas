@@ -247,23 +247,23 @@ function USubirFoto() {
             <div className="menu-icon facturas"></div>
             Facturas
           </button>
-          <button className="menu-item" onClick={() => navigate("/dashboard")}>
-            <div className="menu-icon dashboard"></div>
-            Dashboard
-          </button>
-          <button className="menu-item" onClick={() => navigate("/mis-fotografias")}>
-            <div className="menu-icon fotos"></div>
-            Mis Fotografías
-          </button>
+          <button className="menu-item" onClick={() => navigate("/usuario/dashboard")}>
+  <div className="menu-icon dashboard"></div>
+  Dashboard
+</button>
+         <button className="menu-item" onClick={() => navigate("/usuario/mis-fotografias")}>
+              <div className="menu-icon fotos"></div>
+              Mis Fotografías
+            </button>
           <button className="menu-item" onClick={() => navigate("/perfil")}>
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
-          <button className="sidebar-logout" onClick={() => navigate("/login")}>
-            <div className="logout-icon"></div>
-            Cerrar Sesión
-          </button>
         </nav>
+        <button className="sidebar-logout" onClick={() => navigate("/usuario/perfil")}>
+          <div className="logout-icon"></div>
+          Cerrar Sesión
+        </button>
       </aside>
 
       {/* ---------- Contenido principal ---------- */}

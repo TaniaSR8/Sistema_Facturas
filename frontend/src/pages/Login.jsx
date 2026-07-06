@@ -53,10 +53,17 @@ function Login() {
     localStorage.setItem("rol", rol);
     localStorage.setItem("correo", correo);
 
+    // 👇 nuevo
+if (response.data.usuario?.id) {
+  localStorage.setItem("usuarioId", response.data.usuario.id);
+}
+
     if (rol === "SUPERADMIN") {
       navigate("/usuarios");
     } else if (rol === "ADMINISTRADOR") {
-      navigate("/perfil");
+      navigate("/admin/facturas");
+    } else if (rol === "USUARIO") {
+      navigate("/usuario/foto-ticket");
     } else {
       setMensaje("Tu rol no tiene acceso al sistema");
     }

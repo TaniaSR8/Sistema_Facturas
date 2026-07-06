@@ -48,6 +48,8 @@ html, body, #root {
   padding: 2rem 0;
   flex-shrink: 0;
   position: relative; /* Para posicionar correctamente el menú en móviles */
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 
@@ -400,6 +402,7 @@ input:checked + .slider:before { transform: translateX(16px); }
     min-width: 100%;
     padding: 0;
     height: 75px;
+    min-height: auto;
   }
 
   .sidebar-top-wrapper {

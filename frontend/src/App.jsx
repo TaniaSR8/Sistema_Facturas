@@ -12,6 +12,10 @@ import RutaPrivada from "./components/RutaPrivada"; // 👈 Importa tu component
 import USubirFoto from "./pages/USubirFoto";
 import USubirFactura from "./pages/USubirFactura";
 
+import UMisFotografias from "./pages/UMisFotografias";
+import UDashboard from "./pages/UDashboard";
+import UPerfil from "./pages/UPerfil";
+
 import AdminFacturas from "./pages/AdminFacturas";
 import AdminValidaciones from './pages/AdminValidaciones';
 
@@ -75,11 +79,41 @@ function App() {
           }
         />
 
+
+                  
+          <Route
+            path="/usuario/mis-fotografias"
+            element={
+              <RutaPrivada rolPermitido="USUARIO">
+                <UMisFotografias />
+              </RutaPrivada>
+            }
+          />
+
+          
+          <Route
+  path="/usuario/dashboard"
+  element={
+    <RutaPrivada rolPermitido="USUARIO">
+      <UDashboard />
+    </RutaPrivada>
+  }
+/>
+
+<Route
+  path="/usuario/perfil"
+  element={
+    <RutaPrivada rolPermitido="USUARIO">
+      <UPerfil />
+    </RutaPrivada>
+  }
+/>
+
         {/* Pantallas de Admin protegidas */}
         <Route
           path="/admin/facturas"
           element={
-            <RutaPrivada rolPermitido="ADMIN">
+            <RutaPrivada rolPermitido="ADMINISTRADOR">
               <AdminFacturas />
             </RutaPrivada>
           }
@@ -87,7 +121,7 @@ function App() {
         <Route
           path="/admin/validaciones"
           element={
-            <RutaPrivada rolPermitido="ADMIN">
+            <RutaPrivada rolPermitido="ADMINISTRADOR">
               <AdminValidaciones />
             </RutaPrivada>
           }

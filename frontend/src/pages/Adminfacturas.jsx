@@ -3,6 +3,9 @@ import api, { obtenerMensajeErrorApi } from "../axios";
 
 import "../css/AdminFacturas.css";
 import React, { useState, useEffect, useMemo } from "react";
+// ----------------------
+
+
 
 // ---------------------------------------------------------------------------
 // Catálogos (mismos códigos que usa el resto del sistema)
@@ -14,12 +17,13 @@ const ESTADOS = [
   { valor: "PENDIENTE", etiqueta: "Pendiente" },
 ];
 
-const TIPOS_GASTO = [
+// Catálogo de respaldo por si falla la carga desde el backend
+// (usa los mismos códigos reales de tu tabla tipos_gasto)
+const TIPOS_GASTO_RESPALDO = [
   { valor: "", etiqueta: "Todos los tipos" },
-  { valor: "Carro", etiqueta: "Carro" },
-  { valor: "General", etiqueta: "General" },
-  { valor: "Salud", etiqueta: "Salud" },
-  { valor: "Viáticos", etiqueta: "Viáticos" },
+  { valor: "Gastos en general", etiqueta: "Gastos en general" },
+  { valor: "Equipo de transporte", etiqueta: "Equipo de transporte" },
+  { valor: "Adquisición de mercancías", etiqueta: "Adquisición de mercancías" },
 ];
 
 // La tabla arranca vacía: se llena exclusivamente con lo que devuelva el
@@ -61,6 +65,26 @@ export default function AdminFacturas() {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
 
+  const [tiposGasto, setTiposGasto] = useState(TIPOS_GASTO_RESPALDO);
+
+  useEffect(() => {
+    const cargarTiposGasto = async () => {
+      try {
+        const { data } = await api.get("/facturas/catalogos/tipos-gasto");
+        if (Array.isArray(data) && data.length > 0) {
+          setTiposGasto([
+            { valor: "", etiqueta: "Todos los tipos" },
+            ...data.map((t) => ({ valor: t.descripcion, etiqueta: t.descripcion })),
+          ]);
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar el catálogo de tipos de gasto, usando respaldo.", err);
+        setTiposGasto(TIPOS_GASTO_RESPALDO);
+      }
+    };
+    cargarTiposGasto();
+  }, []);
+
   const [facturas, setFacturas] = useState([]);
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [cargando, setCargando] = useState(true);
@@ -78,7 +102,7 @@ export default function AdminFacturas() {
       setCargando(true);
       setError("");
       try {
-        const { data } = await api.get("/admin/facturas", {
+        const { data } = await api.get("/facturas/listar", {
           params: {
             estado: filtroEstado || undefined,
             tipoGasto: filtroTipoGasto || undefined,
@@ -233,7 +257,7 @@ export default function AdminFacturas() {
                   setPaginaActual(1);
                 }}
               >
-                {TIPOS_GASTO.map((op) => (
+                {tiposGasto.map((op) => (
                   <option key={op.valor} value={op.valor}>
                     {op.etiqueta}
                   </option>
@@ -273,6 +297,7 @@ export default function AdminFacturas() {
               <table className="afac-tabla">
                 <thead>
                   <tr>
+                    <th>USUARIO</th>
                     <th>RAZÓN SOCIAL</th>
                     <th>RFC</th>
                     <th>FECHA</th>
@@ -289,6 +314,7 @@ export default function AdminFacturas() {
                 <tbody>
                   {registrosPagina.map((f) => (
                     <tr key={f.id}>
+                      <td className="afac-texto-gris">{f.nombreUsuario || "—"}</td>
                       <td className="afac-celda-razon">{f.razonSocial}</td>
                       <td className="afac-texto-gris">{f.rfc}</td>
                       <td className="afac-texto-gris">{f.fecha}</td>
@@ -342,7 +368,7 @@ export default function AdminFacturas() {
 
                   {!cargando && registrosPagina.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="afac-sin-resultados">
+                      <td colSpan={12} className="afac-sin-resultados">
                         No se encontraron facturas con los filtros seleccionados.
                       </td>
                     </tr>

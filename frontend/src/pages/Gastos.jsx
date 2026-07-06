@@ -145,11 +145,11 @@ function Gastos() {
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
-          <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
-            <div className="logout-icon"></div>
-            Cerrar Sesión
-          </button>
         </nav>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
+          <div className="logout-icon"></div>
+          Cerrar Sesión
+        </button>
       </aside>
 
       <div className="main-wrapper">

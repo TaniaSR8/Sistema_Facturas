@@ -197,11 +197,11 @@ function PerfilSuperAdmin() {
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
-          <button className="sidebar-logout" onClick={() => setIsLogoutModalOpen(true)}>
-            <div className="logout-icon"></div>
-            Cerrar Sesión
-          </button>
         </nav>
+        <button className="sidebar-logout" onClick={() => setIsLogoutModalOpen(true)}>
+          <div className="logout-icon"></div>
+          Cerrar Sesión
+        </button>
       </aside>
 
       {/* CONTENIDO PRINCIPAL (Compartido de PrincipalSuperAdmin) */}

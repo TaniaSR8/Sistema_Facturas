@@ -5,6 +5,8 @@ import "../css/USubirFactura.css";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 
+import { getDeducciones } from "../services/deduccionesService";
+
 // Se llama como ruta relativa porque baseURL ya es http://localhost:3001/api
 const ENDPOINT_FACTURA = "/facturas/subir";
 
@@ -21,6 +23,9 @@ export default function USubirFactura() {
     subtotal: "",
     total: "",
   });
+
+  const [deducciones, setDeducciones] = useState([]);
+  const [deduccionId, setDeduccionId] = useState("");
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -55,6 +60,7 @@ export default function USubirFactura() {
       subtotal: "",
       total: "",
     });
+    setDeduccionId("");
     setError("");
     setExito("");
     if (inputXmlRef.current) inputXmlRef.current.value = "";
@@ -75,32 +81,36 @@ export default function USubirFactura() {
       return;
     }
 
+    if (!deduccionId) {
+      setError("Selecciona una opción de deducción.");
+      return;
+    }
+
     const usuarioId = localStorage.getItem("usuarioId");
 
-          if (!usuarioId) {
-        setError("Debes iniciar sesión para subir facturas.");
-        return;
-      }
-
+    if (!usuarioId) {
+      setError("Debes iniciar sesión para subir facturas.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("xml", archivoXml);
     formData.append("pdf", archivoPdf);
     formData.append("usuarioId", usuarioId);
+    formData.append("deduccion_id", deduccionId);
 
     try {
       setCargando(true);
       const respuesta = await api.post(ENDPOINT_FACTURA, formData);
 
       const datos = respuesta.data.datos || {};
-          setDatosFactura({
-            emisor_rfc: datos.emisor_rfc || "",
-            emisor_nombre: datos.emisor_nombre || "",
-            fecha: datos.fecha || "",
-            subtotal: datos.subtotal ?? "",
-            total: datos.total ?? "",
-          });
-
+      setDatosFactura({
+        emisor_rfc: datos.emisor_rfc || "",
+        emisor_nombre: datos.emisor_nombre || "",
+        fecha: datos.fecha || "",
+        subtotal: datos.subtotal ?? "",
+        total: datos.total ?? "",
+      });
 
       setExito("Factura procesada correctamente. Verifica los datos antes de continuar.");
     } catch (err) {
@@ -114,6 +124,18 @@ export default function USubirFactura() {
   const tieneDatos = Boolean(
     datosFactura.emisor_rfc || datosFactura.emisor_nombre || datosFactura.fecha
   );
+
+  useEffect(() => {
+    const fetchDeducciones = async () => {
+      try {
+        const res = await getDeducciones();
+        setDeducciones(res.data);
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    fetchDeducciones();
+  }, []);
 
   return (
     <div className="panel-container">
@@ -152,35 +174,35 @@ export default function USubirFactura() {
             Facturas
           </button>
           <button
-            className="menu-item"
-            onClick={() => {
-              setMenuMovilAbierto(false);
-              navigate("/dashboard");
-            }}
-          >
-            <span className="menu-icon dashboard" />
-            Dashboard
-          </button>
+  className="menu-item"
+  onClick={() => {
+    setMenuMovilAbierto(false);
+    navigate("/usuario/dashboard");
+  }}
+>
+  <span className="menu-icon dashboard" />
+  Dashboard
+</button>
           <button
             className="menu-item"
             onClick={() => {
               setMenuMovilAbierto(false);
-              navigate("/usuario/foto-ticket");
+              navigate("/usuario/mis-fotografias");
             }}
           >
             <span className="menu-icon fotos" />
             Mis Fotografías
           </button>
           <button
-            className="menu-item"
-            onClick={() => {
-              setMenuMovilAbierto(false);
-              navigate("/perfil");
-            }}
-          >
-            <span className="menu-icon perfil" />
-            Mi Perfil
-          </button>
+  className="menu-item"
+  onClick={() => {
+    setMenuMovilAbierto(false);
+    navigate("/usuario/perfil");
+  }}
+>
+  <span className="menu-icon perfil" />
+  Mi Perfil
+</button>
         </nav>
 
         <button className="sidebar-logout" onClick={() => navigate("/login")}>
@@ -288,66 +310,83 @@ export default function USubirFactura() {
 
               <div className="usf-campos">
                 <div className="usf-campo">
-              <label>
-                RFC <span className="usf-requerido">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="ABCD123456XY"
-                value={datosFactura.emisor_rfc}
-                readOnly
-              />
-            </div>
+                  <label>
+                    RFC <span className="usf-requerido">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ABCD123456XY"
+                    value={datosFactura.emisor_rfc}
+                    readOnly
+                  />
+                </div>
 
-            <div className="usf-campo">
-              <label>
-                Razón Social <span className="usf-requerido">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Nombre de la empresa"
-                value={datosFactura.emisor_nombre}
-                readOnly
-              />
-            </div>
+                <div className="usf-campo">
+                  <label>
+                    Razón Social <span className="usf-requerido">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nombre de la empresa"
+                    value={datosFactura.emisor_nombre}
+                    readOnly
+                  />
+                </div>
 
-            <div className="usf-campo usf-campo-fecha">
-              <label>
-                Fecha De Emisión <span className="usf-requerido">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="dd/mm/aaaa"
-                value={datosFactura.fecha}
-                readOnly
-              />
-              <span className="usf-campo-fecha-icono">📅</span>
-            </div>
+                <div className="usf-campo usf-campo-fecha">
+                  <label>
+                    Fecha De Emisión <span className="usf-requerido">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="dd/mm/aaaa"
+                    value={datosFactura.fecha}
+                    readOnly
+                  />
+                  <span className="usf-campo-fecha-icono">📅</span>
+                </div>
 
-            <div className="usf-campo">
-              <label>
-                Total sin IVA <span className="usf-requerido">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="0.00"
-                value={datosFactura.subtotal}
-                readOnly
-              />
-            </div>
+                <div className="usf-campo">
+                  <label>
+                    Total sin IVA <span className="usf-requerido">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="0.00"
+                    value={datosFactura.subtotal}
+                    readOnly
+                  />
+                </div>
 
-            <div className="usf-campo">
-              <label>
-                Total <span className="usf-requerido">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="0.00"
-                value={datosFactura.total}
-                readOnly
-              />
-            </div>
+                <div className="usf-campo">
+                  <label>
+                    Total <span className="usf-requerido">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="0.00"
+                    value={datosFactura.total}
+                    readOnly
+                  />
+                </div>
 
+                <div className="usf-campo">
+                  <label>
+                    Deducción <span className="usf-requerido">*</span>
+                  </label>
+                  <select
+                    name="deduccion_id"
+                    value={deduccionId}
+                    onChange={(e) => setDeduccionId(e.target.value)}
+                  >
+                    <option value="">Seleccione deducción</option>
+                    {deducciones.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="usf-acciones">

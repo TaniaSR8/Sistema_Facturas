@@ -46,6 +46,8 @@ html, body, #root {
   padding: 2rem 0;
   flex-shrink: 0;
   position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .top-blue-bar {
@@ -165,6 +167,7 @@ html, body, #root {
     min-width: 100%;
     padding: 0;
     height: 75px;
+    min-height: auto;
   }
 
   .sidebar-top-wrapper {
