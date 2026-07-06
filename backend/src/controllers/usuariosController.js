@@ -87,7 +87,6 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { correo, contrasena } = req.body;
 
-    // Validación: ambos campos obligatorios
     if (!correo || !contrasena) {
         return res.status(400).json({ error: "Correo y contraseña son obligatorios" });
     }
@@ -105,12 +104,20 @@ const login = async (req, res) => {
             { expiresIn: "2h" }
         );
 
-        return res.json({ message: "Login exitoso ✅", token });
+        // 👇 quitamos el password antes de enviar
+        const { password, ...usuarioSinPassword } = usuario;
+
+        return res.json({
+            message: "Login exitoso ✅",
+            token,
+            usuario: usuarioSinPassword
+        });
     } catch (error) {
         console.error("Error en login:", error);
         return res.status(500).json({ message: "Error en el servidor" });
     }
 };
+
 
 const pool = require("../config/db");
 

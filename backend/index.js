@@ -36,6 +36,9 @@ const facturasRoutes = require('./src/routes/facturas');
 app.use('/api/facturas', facturasRoutes);
 
 
+const validacionesRoutes = require('./src/routes/validaciones');
+app.use('/api/validaciones', validacionesRoutes);
+
 // Ruta raíz
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando ");

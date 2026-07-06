@@ -3,8 +3,17 @@ const bcrypt = require("bcrypt");
 
 exports.obtenerPerfil = async (req, res) => {
     try {
-        const { correo } = req.query;
-        const [rows] = await db.query("SELECT * FROM usuarios WHERE correo = ?", [correo]);
+        const { correo, usuarioId } = req.query;
+
+        let rows;
+        if (usuarioId) {
+            [rows] = await db.query("SELECT * FROM usuarios WHERE id = ?", [usuarioId]);
+        } else if (correo) {
+            [rows] = await db.query("SELECT * FROM usuarios WHERE correo = ?", [correo]);
+        } else {
+            return res.status(400).json({ mensaje: "Debes enviar usuarioId o correo" });
+        }
+
         if (rows.length === 0) return res.status(404).json({ mensaje: "Usuario no encontrado" });
         res.json(rows[0]);
     } catch (error) {
