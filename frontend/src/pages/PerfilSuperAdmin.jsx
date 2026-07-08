@@ -7,9 +7,11 @@ import ModalActualizarDatos from '../components/ModalActualizarDatos';
 import ModalCambiarContrasena from '../components/ModalCambiarContrasena';
 import ModalPoliticasContrasena from '../components/ModalPoliticasContrasena';
 import api, { obtenerMensajeErrorApi } from '../axios';
+import { useToast } from '../components/Toast';
 
 function PerfilSuperAdmin() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modalActualizarDatosAbierto, setModalActualizarDatosAbierto] = useState(false);
@@ -80,7 +82,7 @@ function PerfilSuperAdmin() {
     localStorage.removeItem('token');
     sessionStorage.clear();
     setIsLogoutModalOpen(false);
-    alert("Sesión cerrada con éxito");
+    addToast("Sesión cerrada con éxito", "success");
     navigate('/usuarios');
   };
 
@@ -114,7 +116,7 @@ function PerfilSuperAdmin() {
         fechaCreacion: resultado.fechaCreacion || datosActualizados.fechaCreacion
       });
       
-      alert('¡Datos actualizados con éxito en el servidor!');
+      addToast('¡Datos actualizados con éxito en el servidor!', 'success');
 
     } catch (error) {
       console.warn(
@@ -132,7 +134,7 @@ function PerfilSuperAdmin() {
         fechaCreacion: datosActualizados.fechaCreacion
       });
 
-      alert('¡Datos actualizados con éxito! (Simulado localmente)');
+      addToast('¡Datos actualizados con éxito! (Simulado localmente)', 'warning');
     }
   };
 
@@ -144,10 +146,10 @@ function PerfilSuperAdmin() {
             contrasenaActual: datosContrasena.contrasenaActual,
             nuevaContrasena: datosContrasena.nuevaContrasena
           });
-          alert('¡Contraseña cambiada con éxito en el servidor!');
+          addToast('¡Contraseña cambiada con éxito en el servidor!', 'success');
         } catch (error) {
           console.warn('⚠️ Error al cambiar la contraseña en backend:\n', obtenerMensajeErrorApi(error));
-          alert('¡Contraseña cambiada con éxito! (Simulado localmente)');
+          addToast('¡Contraseña cambiada con éxito! (Simulado localmente)', 'warning');
         }
       };
 
@@ -160,12 +162,12 @@ function PerfilSuperAdmin() {
                 configuradoPor: usuario.numeroEmpleado //  este campo es obligatorio
               });
               setPoliticas(respuesta.data.politicas || nuevasPoliticas);
-              alert('¡Políticas de contraseña guardadas con éxito en el servidor!');
+              addToast('¡Políticas de contraseña guardadas con éxito en el servidor!', 'success');
             } catch (error) {
               const msg = obtenerMensajeErrorApi(error);
               console.warn('⚠️ Error al guardar políticas en backend:\n', msg);
               setPoliticas(nuevasPoliticas);
-              alert(`No se pudo conectar o guardar en el servidor: ${msg}\nSe aplicará temporalmente de forma local.`);
+              addToast(`No se pudo guardar en el servidor: ${msg}. Se aplicará localmente.`, 'warning');
             }
           };
 

@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../axios";
 import "../css/UDashboard.css";
 import React, { useState, useEffect, useCallback } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import { useToast } from "../components/Toast";
 
 const REGISTROS_POR_PAGINA = 10;
 
@@ -26,6 +28,15 @@ const formatoFecha = (fecha) => {
 
 export default function UDashboard() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -64,6 +75,7 @@ export default function UDashboard() {
     } catch (err) {
       console.error("Error al cargar el dashboard:", err);
       setError("No se pudo cargar tu información. Intenta de nuevo.");
+      addToast("No se pudo cargar tu información. Intenta de nuevo.", "error");
       setFacturas([]);
       setTotalRegistros(0);
     } finally {
@@ -125,7 +137,7 @@ export default function UDashboard() {
             Mi Perfil
           </button>
         </nav>
-        <button className="sidebar-logout" onClick={() => navigate("/login")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <span className="logout-icon" />
           Cerrar Sesión
         </button>
@@ -306,6 +318,11 @@ export default function UDashboard() {
           </section>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
     </div>
   );
 }

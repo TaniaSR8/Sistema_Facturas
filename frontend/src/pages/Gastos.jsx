@@ -3,15 +3,19 @@ import { useNavigate } from "react-router-dom";
 import '../css/PrincipalSuperAdmin.css';
 import '../css/Gastos.css';
 import ModalCerrarSesion from '../components/ModalCerrarSesion';
+import ModalConfirmacion from '../components/ModalConfirmacion';
+import { useToast } from '../components/Toast';
 
 import axios from 'axios';
 
 function Gastos() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+  const [modalConfirmOpen, setModalConfirmOpen] = useState(false);
 // Estado para el límite empresarial
   const [limiteEmpresarial, setLimiteEmpresarial] = useState(0);
 
@@ -74,46 +78,49 @@ function Gastos() {
 
 
   // 🔹 Guardar cambios en backend
-  const handleGuardarCambios = async () => {
-  if (esExcedido) {
-    alert("Error: El total asignado excede el límite empresarial.");
-    return;
-  }
-
-  try {
-    // 1. Guardar cambios en el backend
-    await axios.put('http://localhost:3001/api/gastos/actualizar', {
-      limiteEmpresarial: Number(limiteEmpresarial),
-      empleados: empleados
-    });
-
-    // 2. Volver a pedir los datos actualizados
-    const respuesta = await axios.get('http://localhost:3001/api/gastos/obtener');
-    setLimiteEmpresarial(Number(respuesta.data.limiteEmpresarial));
-    setEmpleados(respuesta.data.empleados.map(emp => ({
-        ...emp,
-        num: emp.numeroEmpleado,   // 👈 aquí se conserva el No. Empleado
-        limiteGasto: emp.limiteGasto ? Number(emp.limiteGasto) : 0
-      })));
-
-    // 3. Confirmar al usuario
-    alert("¡Límites actualizados con éxito en la Base de Datos MySQL!");
-  } catch (error) {
-    if (error.response) {
-      alert(`Error: ${error.response.data.message}`);
-    } else {
-      alert("⚠️ Falló la conexión con el Backend MySQL.");
+  const handleGuardarCambios = () => {
+    if (esExcedido) {
+      addToast("Error: El total asignado excede el límite empresarial.", "error");
+      return;
     }
-  }
-};
+    setModalConfirmOpen(true);
+  };
 
+  const ejecutarGuardarCambios = async () => {
+    setModalConfirmOpen(false);
+    try {
+      // 1. Guardar cambios en el backend
+      await axios.put('http://localhost:3001/api/gastos/actualizar', {
+        limiteEmpresarial: Number(limiteEmpresarial),
+        empleados: empleados
+      });
+
+      // 2. Volver a pedir los datos actualizados
+      const respuesta = await axios.get('http://localhost:3001/api/gastos/obtener');
+      setLimiteEmpresarial(Number(respuesta.data.limiteEmpresarial));
+      setEmpleados(respuesta.data.empleados.map(emp => ({
+          ...emp,
+          num: emp.numeroEmpleado,   // 👈 aquí se conserva el No. Empleado
+          limiteGasto: emp.limiteGasto ? Number(emp.limiteGasto) : 0
+        })));
+
+      // 3. Confirmar al usuario
+      addToast("¡Límites actualizados con éxito en la Base de Datos MySQL!", "success");
+    } catch (error) {
+      if (error.response) {
+        addToast(`Error: ${error.response.data.message}`, "error");
+      } else {
+        addToast("⚠️ Falló la conexión con el Backend MySQL.", "error");
+      }
+    }
+  };
 
   const handleCerrarSesion = () => {
     localStorage.removeItem('token');
     sessionStorage.clear();
     setModalCerrarSesionAbierto(false);
-    alert("Sesión cerrada con éxito");
-    window.location.reload();
+    addToast("Sesión cerrada con éxito", "success");
+    navigate('/login');
   };
 
   
@@ -365,6 +372,15 @@ function Gastos() {
         isOpen={modalCerrarSesionAbierto} 
         onClose={() => setModalCerrarSesionAbierto(false)} 
         onConfirm={handleCerrarSesion}
+      />
+      <ModalConfirmacion
+        isOpen={modalConfirmOpen}
+        type="warning"
+        title="Confirmar acción"
+        message="¿Estás seguro de que deseas guardar los cambios en los límites de gasto?"
+        subMessage="Esta acción modificará la configuración empresarial y de los empleados."
+        onConfirm={ejecutarGuardarCambios}
+        onClose={() => setModalConfirmOpen(false)}
       />
     </div>
   );

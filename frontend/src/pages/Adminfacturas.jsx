@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import api, { obtenerMensajeErrorApi } from "../axios";
-
 import "../css/AdminFacturas.css";
 import React, { useState, useEffect, useMemo } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import { useToast } from "../components/Toast";
 // ----------------------
 
 
@@ -57,13 +58,22 @@ const generarPaginas = (totalPaginas, paginaActual) => {
 
 export default function AdminFacturas() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
 
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroTipoGasto, setFiltroTipoGasto] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   const [tiposGasto, setTiposGasto] = useState(TIPOS_GASTO_RESPALDO);
 
@@ -209,7 +219,7 @@ export default function AdminFacturas() {
             <div className="menu-icon afac-perfil"></div>
             Mi Perfil
           </button>
-          <button className="sidebar-logout" onClick={() => navigate("/login")}>
+          <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
             <div className="logout-icon"></div>
             Cerrar Sesión
           </button>
@@ -423,6 +433,11 @@ export default function AdminFacturas() {
           </section>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
     </div>
   );
 }

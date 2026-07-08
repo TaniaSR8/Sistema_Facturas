@@ -17,12 +17,13 @@ import UDashboard from "./pages/UDashboard";
 import UPerfil from "./pages/UPerfil";
 
 import AdminFacturas from "./pages/AdminFacturas";
-import AdminValidaciones from './pages/AdminValidaciones';
-
+import AdminValidaciones from "./pages/AdminValidaciones";
+import { ToastProvider } from './components/Toast';
 
 function App() {
   return (
-    <Router>
+    <ToastProvider>
+      <Router>
       <Routes>
 
         {/* Redirigir la raíz a login */}
@@ -128,6 +129,7 @@ function App() {
         />
       </Routes>
     </Router>
+   </ToastProvider>
   );
 }
 

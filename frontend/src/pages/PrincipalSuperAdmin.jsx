@@ -4,6 +4,8 @@ import '../css/PrincipalSuperAdmin.css';
 import ModalAgregarUsuario from '../components/ModalAgregarUsuario';
 import ModalCerrarSesion from '../components/ModalCerrarSesion';
 import ModalEditarUsuario from '../components/ModalEditarUsuario';
+import ModalConfirmacion from '../components/ModalConfirmacion';
+import { useToast } from '../components/Toast';
 import api, { obtenerMensajeErrorApi } from "../axios";
 
 const mapearUsuarioBackend = (usuario) => {
@@ -68,6 +70,7 @@ const prepararPayloadRegistro = (formulario) => {
 
 function PrincipalSuperAdmin() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [menuAbierto, setMenuAbierto] = useState(false); // Estado para el menú hamburguesa
@@ -75,6 +78,14 @@ function PrincipalSuperAdmin() {
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [modalConfirm, setModalConfirm] = useState({
+    isOpen: false,
+    type: "warning",
+    title: "",
+    message: "",
+    subMessage: "",
+    onConfirm: null
+  });
 
   const registrosPorPagina = 7;
 
@@ -95,65 +106,77 @@ useEffect(() => {
 
   
 
- const controlarToggle = async (id) => {
-  try {
-    const token = localStorage.getItem("token");
+  const controlarToggle = (id) => {
     const usuario = empleados.find(emp => emp.id === id);
-    const nuevoEstado = usuario.activo ? "INACTIVO" : "ACTIVO";
+    if (!usuario) return;
+    const esDesactivar = usuario.activo;
+    
+    setModalConfirm({
+      isOpen: true,
+      type: esDesactivar ? "warning" : "success",
+      title: "Confirmar acción",
+      message: `¿Estás seguro de que deseas ${esDesactivar ? "desactivar" : "activar"} al usuario ${usuario.nombre}?`,
+      subMessage: esDesactivar ? "El usuario no podrá ingresar al sistema mientras esté inactivo." : "El usuario podrá ingresar al sistema inmediatamente.",
+      onConfirm: async () => {
+        setModalConfirm(prev => ({ ...prev, isOpen: false }));
+        try {
+          const token = localStorage.getItem("token");
+          const nuevoEstado = esDesactivar ? "INACTIVO" : "ACTIVO";
 
-    const res = await api.put(`/usuarios/${id}`, { estado: nuevoEstado }, {
-      headers: { Authorization: `Bearer ${token}` },
+          const res = await api.put(`/usuarios/${id}`, { estado: nuevoEstado }, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          setEmpleados(prev =>
+            prev.map(emp => emp.id === id ? mapearUsuarioBackend(res.data) : emp)
+          );
+          addToast(`Usuario ${usuario.nombre} ${esDesactivar ? "desactivado" : "activado"} con éxito.`, "success");
+        } catch (error) {
+          console.error("Error al actualizar estado:", error);
+          addToast("Error al actualizar el estado del usuario.", "error");
+        }
+      }
     });
-
-    setEmpleados(prev =>
-      prev.map(emp => emp.id === id ? mapearUsuarioBackend(res.data) : emp)
-    );
-  } catch (error) {
-    console.error("Error al actualizar estado:", error);
-  }
-};
-
-
+  };
 
   const handleAgregarUsuario = async (nuevoUsuario) => {
     try {
       const payload = prepararPayloadRegistro(nuevoUsuario);
       await api.post("/usuarios/register", payload);
       await cargarUsuarios();
-      alert("¡Usuario registrado correctamente!");
+      addToast("¡Usuario registrado correctamente!", "success");
       return true;
     } catch (error) {
       console.error("Error al registrar usuario:", error);
-      alert(obtenerMensajeErrorApi(error));
+      addToast(obtenerMensajeErrorApi(error), "error");
       return false;
     }
   };
 
-
   const handleEditarUsuario = async (usuarioModificado) => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await api.put(`/usuarios/${usuarioModificado.id}`, usuarioModificado, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setEmpleados(prev =>
-      prev.map(emp =>
-        emp.id === usuarioModificado.id ? mapearUsuarioBackend(res.data) : emp
-      )
-    );
-    alert("¡Usuario actualizado en el servidor!");
-  } catch (error) {
-    console.error("Error al actualizar usuario:", error);
-    alert("Error al actualizar usuario en el servidor");
-  }
-};
-
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.put(`/usuarios/${usuarioModificado.id}`, usuarioModificado, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEmpleados(prev =>
+        prev.map(emp =>
+          emp.id === usuarioModificado.id ? mapearUsuarioBackend(res.data) : emp
+        )
+      );
+      addToast("¡Usuario actualizado en el servidor!", "success");
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error);
+      addToast("Error al actualizar usuario en el servidor", "error");
+    }
+  };
 
   const handleCerrarSesion = () => {
-  localStorage.removeItem("token");
-  setModalCerrarSesionAbierto(false);
-  navigate("/login"); // 👈 redirige directo
-};
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
 
   const empleadosEnTabla = empleados.filter(esUsuarioGestionable);

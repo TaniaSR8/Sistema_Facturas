@@ -4,6 +4,8 @@ import api, { obtenerMensajeErrorApi } from "../axios";
 import "../css/USubirFoto.css";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import { useToast } from "../components/Toast";
 
 const TIPOS_GASTO = [
   { codigo: "G01", descripcion: "Adquisición de mercancías" },
@@ -43,6 +45,15 @@ const esDispositivoMovil = () =>
 
 function USubirFoto() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   // Mismo patrón de menú hamburguesa que PrincipalSuperAdmin
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -176,18 +187,22 @@ function USubirFoto() {
 
     if (!archivo) {
       setError("Debes tomar una foto o subir un archivo.");
+      addToast("Debes tomar una foto o subir un archivo.", "error");
       return;
     }
     if (!monto || Number(monto) <= 0) {
       setError("Ingresa un monto válido.");
+      addToast("Ingresa un monto válido.", "error");
       return;
     }
     if (!formaPago) {
       setError("Selecciona una forma de pago.");
+      addToast("Selecciona una forma de pago.", "error");
       return;
     }
     if (!deduccionId) {
       setError("Selecciona una opción de factura.");
+      addToast("Selecciona una opción de factura.", "error");
       return;
     }
 
@@ -216,9 +231,12 @@ function USubirFoto() {
         },
       });
       setExito("Foto guardada correctamente.");
+      addToast("Foto guardada correctamente.", "success");
       limpiarFormulario();
     } catch (err) {
-      setError(obtenerMensajeErrorApi ? obtenerMensajeErrorApi(err) : "Error al guardar la foto.");
+      const msg = obtenerMensajeErrorApi ? obtenerMensajeErrorApi(err) : "Error al guardar la foto.";
+      setError(msg);
+      addToast(msg, "error");
     } finally {
       setEnviando(false);
     }
@@ -260,7 +278,7 @@ function USubirFoto() {
             Mi Perfil
           </button>
         </nav>
-        <button className="sidebar-logout" onClick={() => navigate("/usuario/perfil")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <div className="logout-icon"></div>
           Cerrar Sesión
         </button>
@@ -437,6 +455,11 @@ function USubirFoto() {
           </form>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
     </div>
   );
 }

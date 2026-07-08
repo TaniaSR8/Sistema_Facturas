@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import api, { obtenerMensajeErrorApi } from "../axios";
 import "../css/AdminValidaciones.css";
 import React, { useState, useEffect } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import ModalConfirmacion from "../components/ModalConfirmacion";
+import { useToast } from "../components/Toast";
 
 
 /* ==========================================================================
@@ -103,6 +106,7 @@ const IconCamera = (props) => (
 
 function AdminValidaciones() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -113,6 +117,17 @@ function AdminValidaciones() {
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [tabActiva, setTabActiva] = useState("pdf");
   const [procesando, setProcesando] = useState(false);
+
+  // Modales
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+  const [modalConfirm, setModalConfirm] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    subMessage: "",
+    onConfirm: null
+  });
 
   useEffect(() => {
     const cargarFacturas = async () => {
@@ -148,18 +163,42 @@ function AdminValidaciones() {
     }
   };
 
-  const manejarDecision = async (decision) => {
+  const manejarDecision = (decision) => {
     if (!facturaSeleccionada) return;
-    setProcesando(true);
-    try {
-      await api.post(`/validaciones/${facturaSeleccionada.id}/decision`, { decision });
-      setFacturas((prev) => prev.filter((f) => f.id !== facturaSeleccionada.id));
-      setFacturaSeleccionada(null);
-    } catch (err) {
-      setError(obtenerMensajeErrorApi ? obtenerMensajeErrorApi(err) : "No se pudo registrar la decisión.");
-    } finally {
-      setProcesando(false);
-    }
+    const esDeducible = decision === "deducible";
+    
+    setModalConfirm({
+      isOpen: true,
+      type: esDeducible ? "success" : "warning",
+      title: "Confirmar acción",
+      message: esDeducible
+        ? `¿Desea marcar la factura ${facturaSeleccionada.folio || "sin folio"} como DEDUCIBLE?`
+        : `¿Estás seguro de marcar la factura ${facturaSeleccionada.folio || "sin folio"} como No deducible?`,
+      subMessage: esDeducible ? "Esta acción actualizará el registro de forma inmediata." : "",
+      onConfirm: async () => {
+        setModalConfirm(prev => ({ ...prev, isOpen: false }));
+        setProcesando(true);
+        try {
+          await api.post(`/validaciones/${facturaSeleccionada.id}/decision`, { decision });
+          addToast(`Factura marcada como ${esDeducible ? "Deducible" : "No deducible"} con éxito.`, "success");
+          setFacturas((prev) => prev.filter((f) => f.id !== facturaSeleccionada.id));
+          setFacturaSeleccionada(null);
+        } catch (err) {
+          const msg = obtenerMensajeErrorApi ? obtenerMensajeErrorApi(err) : "No se pudo registrar la decisión.";
+          setError(msg);
+          addToast(msg, "error");
+        } finally {
+          setProcesando(false);
+        }
+      }
+    });
+  };
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
   };
 
   const formatearMoneda = (monto) =>
@@ -216,7 +255,7 @@ function AdminValidaciones() {
             Mi Perfil
           </button>
         </nav>
-        <button className="sidebar-logout" onClick={() => navigate("/login")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <div className="logout-icon"></div>
           Cerrar Sesión
         </button>
@@ -426,6 +465,20 @@ function AdminValidaciones() {
           </div>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
+      <ModalConfirmacion
+        isOpen={modalConfirm.isOpen}
+        type={modalConfirm.type}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        subMessage={modalConfirm.subMessage}
+        onConfirm={modalConfirm.onConfirm}
+        onClose={() => setModalConfirm(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

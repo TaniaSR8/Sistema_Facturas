@@ -1,8 +1,10 @@
 import React, { useState, useRef } from "react";
 import "../css/codigoOtp.css";
 import { ShieldCheck, CheckCircle2, Info } from "lucide-react";
+import { useToast } from "../components/Toast";
 
 function CodigoOtp() {
+  const { addToast } = useToast();
   // Estado para guardar los 6 dígitos por separado
   const [codigos, setCodigos] = useState(["", "", "", "", "", ""]);
   const [mensaje, setMensaje] = useState("");
@@ -48,7 +50,7 @@ function CodigoOtp() {
   const manejarReenvio = (e) => {
     e.preventDefault();
     console.log("Solicitando reenvío de código...");
-    alert("Se ha enviado un nuevo código a tu correo.");
+    addToast("Se ha enviado un nuevo código a tu correo.", "success");
   };
 
   return (

@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../axios";
 import "../css/UMisFotografias.css";
 import React, { useState, useEffect, useCallback } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import { useToast } from "../components/Toast";
 
 const TIPOS_GASTO_RESPALDO = [{ valor: "", etiqueta: "Todos los tipos" }];
 const REGISTROS_POR_PAGINA = 5;
@@ -20,6 +22,15 @@ const formatoFecha = (fecha) => {
 
 export default function UMisFotografias() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -76,6 +87,7 @@ export default function UMisFotografias() {
     } catch (err) {
       console.error("Error al cargar historial de fotos:", err);
       setError("No se pudo cargar tu historial de fotografías.");
+      addToast("No se pudo cargar tu historial de fotografías.", "error");
       setFotos([]);
       setTotalRegistros(0);
     } finally {
@@ -110,9 +122,11 @@ export default function UMisFotografias() {
             : f
         )
       );
+      addToast("Fotografía actualizada correctamente.", "success");
     } catch (err) {
       console.error("Error al actualizar el checkbox:", err);
       setError("No se pudo actualizar esa fotografía. Intenta de nuevo.");
+      addToast("No se pudo actualizar esa fotografía. Intenta de nuevo.", "error");
     } finally {
       setGuardandoId(null);
     }
@@ -160,7 +174,7 @@ export default function UMisFotografias() {
             Mi Perfil
           </button>
         </nav>
-        <button className="sidebar-logout" onClick={() => navigate("/login")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <div className="logout-icon"></div>
           Cerrar Sesión
         </button>
@@ -333,6 +347,11 @@ export default function UMisFotografias() {
           </section>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
     </div>
   );
 }

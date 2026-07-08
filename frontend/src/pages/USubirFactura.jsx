@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import "../css/USubirFactura.css";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import { useToast } from "../components/Toast";
 
 import { getDeducciones } from "../services/deduccionesService";
 
@@ -12,6 +14,15 @@ const ENDPOINT_FACTURA = "/facturas/subir";
 
 export default function USubirFactura() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   const [archivoXml, setArchivoXml] = useState(null);
   const [archivoPdf, setArchivoPdf] = useState(null);
@@ -78,11 +89,13 @@ export default function USubirFactura() {
 
     if (!archivoXml || !archivoPdf) {
       setError("Debes seleccionar el archivo XML y el archivo PDF antes de subir la factura.");
+      addToast("Debes seleccionar el archivo XML y el archivo PDF antes de subir la factura.", "error");
       return;
     }
 
     if (!deduccionId) {
       setError("Selecciona una opción de deducción.");
+      addToast("Selecciona una opción de deducción.", "error");
       return;
     }
 
@@ -90,6 +103,7 @@ export default function USubirFactura() {
 
     if (!usuarioId) {
       setError("Debes iniciar sesión para subir facturas.");
+      addToast("Debes iniciar sesión para subir facturas.", "error");
       return;
     }
 
@@ -113,9 +127,12 @@ export default function USubirFactura() {
       });
 
       setExito("Factura procesada correctamente. Verifica los datos antes de continuar.");
+      addToast("Factura procesada correctamente. Verifica los datos antes de continuar.", "success");
     } catch (err) {
       console.error("Error al subir la factura:", err);
-      setError(obtenerMensajeErrorApi(err));
+      const msg = obtenerMensajeErrorApi(err);
+      setError(msg);
+      addToast(msg, "error");
     } finally {
       setCargando(false);
     }
@@ -205,7 +222,7 @@ export default function USubirFactura() {
 </button>
         </nav>
 
-        <button className="sidebar-logout" onClick={() => navigate("/login")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <span className="logout-icon" />
           Cerrar Sesión
         </button>
@@ -411,6 +428,11 @@ export default function USubirFactura() {
           </section>
         </main>
       </div>
+      <ModalCerrarSesion 
+        isOpen={modalCerrarSesionAbierto} 
+        onClose={() => setModalCerrarSesionAbierto(false)} 
+        onConfirm={handleCerrarSesion} 
+      />
     </div>
   );
 }

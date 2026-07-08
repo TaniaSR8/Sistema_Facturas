@@ -2,6 +2,11 @@ import { useNavigate } from "react-router-dom";
 import api, { obtenerMensajeErrorApi } from "../axios";
 import "../css/UPerfil.css";
 import React, { useState, useEffect } from "react";
+import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import ModalActualizarDatos from "../components/ModalActualizarDatos";
+import ModalCambiarContrasena from "../components/ModalCambiarContrasena";
+import { useToast } from "../components/Toast";
+
 
 const formatoFecha = (fecha) => {
   if (!fecha) return "—";
@@ -10,8 +15,66 @@ const formatoFecha = (fecha) => {
   return d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
+// Iconos SVG para los info-box / botones (estos sí funcionan bien con
+// currentColor porque están dentro de contenedores que ya definen su color)
+const IconBadge = (props) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="10" r="2" />
+    <path d="M6 16c0-2 2-3 3-3s3 1 3 3" />
+    <line x1="14" y1="9" x2="18" y2="9" />
+    <line x1="14" y1="13" x2="18" y2="13" />
+  </svg>
+);
+
+const IconAt = (props) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+  </svg>
+);
+
+const IconCheckCircle = (props) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" {...props}>
+    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.707 9.293l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 111.414-1.414L10 14.586l4.293-4.293a1 1 0 111.414 1.414z" clipRule="evenodd" />
+  </svg>
+);
+
+const IconCalendar = (props) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const IconEdit = (props) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </svg>
+);
+
+const IconLockReset = (props) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
+    <rect x="9" y="12" width="6" height="5" rx="1" />
+    <path d="M10 12V10a2 2 0 1 1 4 0v2" />
+  </svg>
+);
+
 export default function UPerfil() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+
+  const handleCerrarSesion = () => {
+    localStorage.removeItem("token");
+    setModalCerrarSesionAbierto(false);
+    addToast("Sesión cerrada con éxito", "success");
+    navigate("/login");
+  };
 
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -28,6 +91,56 @@ export default function UPerfil() {
   const [passwordForm, setPasswordForm] = useState({ actual: "", nueva: "", confirmar: "" });
   const [guardando, setGuardando] = useState(false);
 
+  // Estados para controlar los nuevos modales
+  const [modalActualizarAbierto, setModalActualizarAbierto] = useState(false);
+  const [modalContrasenaAbierto, setModalContrasenaAbierto] = useState(false);
+
+  // Callbacks preparados para que conectes el backend/API de los modales más adelante
+  const alGuardarActualizar = async (datosUsuario) => {
+    console.log("Guardar datos del modal (preparado):", datosUsuario);
+    /*
+    try {
+      await api.put("/perfil/actualizar", {
+        nombre: datosUsuario.nombreCompleto,
+        correo: datosUsuario.correo,
+        telefono: datosUsuario.telefono,
+        estado: datosUsuario.estado,
+        numeroEmpleado: datosUsuario.numeroEmpleado,
+      });
+      setPerfil((prev) => ({
+        ...prev,
+        nombre: datosUsuario.nombreCompleto,
+        correo: datosUsuario.correo,
+        telefono: datosUsuario.telefono,
+        estado: datosUsuario.estado
+      }));
+      addToast("Datos actualizados correctamente.", "success");
+    } catch (err) {
+      const msg = obtenerMensajeErrorApi(err);
+      addToast(msg, "error");
+      throw err;
+    }
+    */
+  };
+
+  const alGuardarContrasena = async (datosContrasena) => {
+    console.log("Cambiar contraseña del modal (preparado):", datosContrasena);
+    /*
+    try {
+      await api.put("/perfil/cambiar-contrasena", {
+        correo: perfil.correo,
+        contrasenaActual: datosContrasena.contrasenaActual,
+        nuevaContrasena: datosContrasena.nuevaContrasena,
+      });
+      addToast("Contraseña actualizada correctamente.", "success");
+    } catch (err) {
+      const msg = obtenerMensajeErrorApi(err);
+      addToast(msg, "error");
+      throw err;
+    }
+    */
+  };
+
   useEffect(() => {
     const cargarPerfil = async () => {
       setCargando(true);
@@ -42,7 +155,9 @@ export default function UPerfil() {
           telefono: data.telefono || "",
         });
       } catch (err) {
-        setError(obtenerMensajeErrorApi(err));
+        const msg = obtenerMensajeErrorApi(err);
+        setError(msg);
+        addToast(msg, "error");
       } finally {
         setCargando(false);
       }
@@ -69,9 +184,12 @@ export default function UPerfil() {
       });
       setPerfil((prev) => ({ ...prev, ...datosForm }));
       setExito("Datos actualizados correctamente.");
+      addToast("Datos actualizados correctamente.", "success");
       setMostrarActualizar(false);
     } catch (err) {
-      setError(obtenerMensajeErrorApi(err));
+      const msg = obtenerMensajeErrorApi(err);
+      setError(msg);
+      addToast(msg, "error");
     } finally {
       setGuardando(false);
     }
@@ -84,6 +202,7 @@ export default function UPerfil() {
 
     if (passwordForm.nueva !== passwordForm.confirmar) {
       setError("La nueva contraseña y su confirmación no coinciden.");
+      addToast("La nueva contraseña y su confirmación no coinciden.", "error");
       return;
     }
 
@@ -95,10 +214,13 @@ export default function UPerfil() {
         nuevaContrasena: passwordForm.nueva,
       });
       setExito("Contraseña actualizada correctamente.");
+      addToast("Contraseña actualizada correctamente.", "success");
       setPasswordForm({ actual: "", nueva: "", confirmar: "" });
       setMostrarContrasena(false);
     } catch (err) {
-      setError(obtenerMensajeErrorApi(err));
+      const msg = obtenerMensajeErrorApi(err);
+      setError(msg);
+      addToast(msg, "error");
     } finally {
       setGuardando(false);
     }
@@ -144,7 +266,7 @@ export default function UPerfil() {
             Mi Perfil
           </button>
         </nav>
-        <button className="sidebar-logout" onClick={() => navigate("/login")}>
+        <button className="sidebar-logout" onClick={() => setModalCerrarSesionAbierto(true)}>
           <span className="logout-icon" />
           Cerrar Sesión
         </button>
@@ -154,7 +276,7 @@ export default function UPerfil() {
       <div className="main-wrapper">
         <div className="top-blue-bar uperfil-topbar">
           <span className="uperfil-topbar-icono">
-            <span className="material-symbols-outlined">account_circle</span>
+            <div className="uperfil-icon-header"></div>
           </span>
           <h1 className="uperfil-topbar-titulo">Mi Perfil</h1>
         </div>
@@ -177,7 +299,7 @@ export default function UPerfil() {
               <div className="uperfil-grid">
                 <div className="uperfil-info-card">
                   <div className="uperfil-info-icono">
-                    <span className="material-symbols-outlined">badge</span>
+                    <IconBadge />
                   </div>
                   <div className="uperfil-info-texto">
                     <span className="uperfil-info-etiqueta">Número de empleado</span>
@@ -187,7 +309,7 @@ export default function UPerfil() {
 
                 <div className="uperfil-info-card">
                   <div className="uperfil-info-icono">
-                    <span className="material-symbols-outlined">mail</span>
+                    <IconAt />
                   </div>
                   <div className="uperfil-info-texto">
                     <span className="uperfil-info-etiqueta">Correo institucional</span>
@@ -202,7 +324,7 @@ export default function UPerfil() {
                   <div className="uperfil-info-card-header">
                     <span className="uperfil-info-etiqueta">Estado de cuenta</span>
                     <span className="uperfil-indicador-icono uperfil-indicador-icono--ok">
-                      <span className="material-symbols-outlined">check_circle</span>
+                      <IconCheckCircle />
                     </span>
                   </div>
                   <div className="uperfil-estado-valor">
@@ -219,7 +341,7 @@ export default function UPerfil() {
                   <div className="uperfil-info-card-header">
                     <span className="uperfil-info-etiqueta">Fecha de creación</span>
                     <span className="uperfil-indicador-icono">
-                      <span className="material-symbols-outlined">calendar_month</span>
+                      <IconCalendar />
                     </span>
                   </div>
                   <div className="uperfil-estado-valor">
@@ -232,119 +354,55 @@ export default function UPerfil() {
               <div className="uperfil-acciones">
                 <button
                   className="uperfil-btn uperfil-btn--primario"
-                  onClick={() => {
-                    setMostrarActualizar((prev) => !prev);
-                    setMostrarContrasena(false);
-                  }}
+                  onClick={() => setModalActualizarAbierto(true)}
                 >
-                  <span className="material-symbols-outlined">edit</span>
+                  <IconEdit />
                   Actualizar Datos
                 </button>
                 <button
                   className="uperfil-btn uperfil-btn--primario"
-                  onClick={() => {
-                    setMostrarContrasena((prev) => !prev);
-                    setMostrarActualizar(false);
-                  }}
+                  onClick={() => setModalContrasenaAbierto(true)}
                 >
-                  <span className="material-symbols-outlined">lock_reset</span>
+                  <IconLockReset />
                   Cambiar Contraseña
                 </button>
               </div>
-
-              {/* Formulario: Actualizar Datos */}
-              {mostrarActualizar && (
-                <form className="uperfil-form-card" onSubmit={manejarActualizarDatos}>
-                  <h3 className="uperfil-form-titulo">Actualizar datos</h3>
-                  <div className="uperfil-form-grid">
-                    <div className="uperfil-campo">
-                      <label>Nombre completo</label>
-                      <input
-                        type="text"
-                        value={datosForm.nombre}
-                        onChange={(e) => setDatosForm({ ...datosForm, nombre: e.target.value })}
-                      />
-                    </div>
-                    <div className="uperfil-campo">
-                      <label>Correo</label>
-                      <input
-                        type="email"
-                        value={datosForm.correo}
-                        onChange={(e) => setDatosForm({ ...datosForm, correo: e.target.value })}
-                      />
-                    </div>
-                    <div className="uperfil-campo">
-                      <label>Teléfono</label>
-                      <input
-                        type="tel"
-                        value={datosForm.telefono}
-                        onChange={(e) => setDatosForm({ ...datosForm, telefono: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="uperfil-form-acciones">
-                    <button
-                      type="button"
-                      className="uperfil-btn uperfil-btn--secundario"
-                      onClick={() => setMostrarActualizar(false)}
-                    >
-                      Cancelar
-                    </button>
-                    <button type="submit" className="uperfil-btn uperfil-btn--primario" disabled={guardando}>
-                      {guardando ? "Guardando..." : "Guardar cambios"}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Formulario: Cambiar Contraseña */}
-              {mostrarContrasena && (
-                <form className="uperfil-form-card" onSubmit={manejarCambiarContrasena}>
-                  <h3 className="uperfil-form-titulo">Cambiar contraseña</h3>
-                  <div className="uperfil-form-grid">
-                    <div className="uperfil-campo">
-                      <label>Contraseña actual</label>
-                      <input
-                        type="password"
-                        value={passwordForm.actual}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, actual: e.target.value })}
-                      />
-                    </div>
-                    <div className="uperfil-campo">
-                      <label>Nueva contraseña</label>
-                      <input
-                        type="password"
-                        value={passwordForm.nueva}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, nueva: e.target.value })}
-                      />
-                    </div>
-                    <div className="uperfil-campo">
-                      <label>Confirmar nueva contraseña</label>
-                      <input
-                        type="password"
-                        value={passwordForm.confirmar}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmar: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="uperfil-form-acciones">
-                    <button
-                      type="button"
-                      className="uperfil-btn uperfil-btn--secundario"
-                      onClick={() => setMostrarContrasena(false)}
-                    >
-                      Cancelar
-                    </button>
-                    <button type="submit" className="uperfil-btn uperfil-btn--primario" disabled={guardando}>
-                      {guardando ? "Guardando..." : "Cambiar contraseña"}
-                    </button>
-                  </div>
-                </form>
-              )}
             </>
           )}
         </main>
       </div>
+      <ModalCerrarSesion
+        isOpen={modalCerrarSesionAbierto}
+        onClose={() => setModalCerrarSesionAbierto(false)}
+        onConfirm={handleCerrarSesion}
+      />
+      <ModalActualizarDatos
+        estaAbierto={modalActualizarAbierto}
+        alCerrar={() => setModalActualizarAbierto(false)}
+        datosIniciales={
+          perfil
+            ? {
+                ...perfil,
+                nombre: nombreCompleto,
+                fechaCreacion: formatoFecha(perfil.fechaCreacion),
+              }
+            : null
+        }
+        alGuardar={alGuardarActualizar}
+      />
+      <ModalCambiarContrasena
+        estaAbierto={modalContrasenaAbierto}
+        alCerrar={() => setModalContrasenaAbierto(false)}
+        alGuardar={alGuardarContrasena}
+        politicas={{
+          longitudMinima: 8,
+          longitudMaxima: 16,
+          minNumeros: 1,
+          minEspeciales: 1,
+          minMayusculas: 1,
+          minMinusculas: 1
+        }}
+      />
     </div>
   );
 }
