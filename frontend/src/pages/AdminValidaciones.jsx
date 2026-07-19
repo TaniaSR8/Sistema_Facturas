@@ -246,9 +246,10 @@ function AdminValidaciones() {
             <div className="menu-icon aval-reporte-pendientes"></div>
             Reporte de Pendientes
           </button>
-          <button className="menu-item" onClick={() => navigate("/admin/usuarios")}>
-            <div className="menu-icon aval-usuarios"></div>
-            Usuarios
+
+          <button className="menu-item" onClick={() => navigate("/admin/reporte-ventas-mes")}>
+            <div className="menu-icon aval-reporte-ventas"></div>
+            Reporte de ventas del mes
           </button>
           <button className="menu-item" onClick={() => navigate("/admin/perfil")}>
             <div className="menu-icon aval-perfil"></div>

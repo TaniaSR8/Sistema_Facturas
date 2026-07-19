@@ -3,10 +3,27 @@ import api, { obtenerMensajeErrorApi } from "../axios";
 import "../css/AdminFacturas.css";
 import React, { useState, useEffect, useMemo } from "react";
 import ModalCerrarSesion from "../components/ModalCerrarSesion";
+import ModalSubirFactura from "../components/ModalSubirFactura";
 import { useToast } from "../components/Toast";
-// ----------------------
 
+import ModalDetalleFactura from "../components/ModalDetalleFactura";
 
+// ---------------------------------------------------------------------------
+// Íconos SVG (sin emojis) para la columna ARCHIVOS
+// ---------------------------------------------------------------------------
+const IconoCamara = (props) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M4 7h3l2-2h6l2 2h3a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </svg>
+);
+
+const IconoDocumento = (props) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+    <path d="M9 9h6M9 13h6M9 17h4" />
+  </svg>
+);
 
 // ---------------------------------------------------------------------------
 // Catálogos (mismos códigos que usa el resto del sistema)
@@ -18,17 +35,12 @@ const ESTADOS = [
   { valor: "PENDIENTE", etiqueta: "Pendiente" },
 ];
 
-// Catálogo de respaldo por si falla la carga desde el backend
-// (usa los mismos códigos reales de tu tabla tipos_gasto)
 const TIPOS_GASTO_RESPALDO = [
   { valor: "", etiqueta: "Todos los tipos" },
   { valor: "Gastos en general", etiqueta: "Gastos en general" },
   { valor: "Equipo de transporte", etiqueta: "Equipo de transporte" },
   { valor: "Adquisición de mercancías", etiqueta: "Adquisición de mercancías" },
 ];
-
-// La tabla arranca vacía: se llena exclusivamente con lo que devuelva el
-// backend en el useEffect de abajo (GET /admin/facturas).
 
 const formatoMoneda = (valor) =>
   Number(valor || 0).toLocaleString("es-MX", {
@@ -38,7 +50,6 @@ const formatoMoneda = (valor) =>
 
 const REGISTROS_POR_PAGINA = 10;
 
-// Genera la lista de botones de paginación con "..." cuando hay muchas páginas
 const generarPaginas = (totalPaginas, paginaActual) => {
   if (totalPaginas <= 7) {
     return Array.from({ length: totalPaginas }, (_, i) => i + 1);
@@ -62,6 +73,25 @@ export default function AdminFacturas() {
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
+  const [idFacturaModal, setIdFacturaModal] = useState(null);
+  const [recargarTrigger, setRecargarTrigger] = useState(0);
+
+  // ---------- Modal de detalle ----------
+  const [facturaDetalle, setFacturaDetalle] = useState(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+  const handleVerDetalle = async (f) => {
+    setCargandoDetalle(true);
+    try {
+      const idNumerico = String(f.id).replace(/^f-/, "");
+      const { data } = await api.get(`/facturas/${idNumerico}`);
+      setFacturaDetalle(data);
+    } catch (err) {
+      addToast(obtenerMensajeErrorApi(err), "error");
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
 
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroTipoGasto, setFiltroTipoGasto] = useState("");
@@ -102,11 +132,6 @@ export default function AdminFacturas() {
 
   const [paginaActual, setPaginaActual] = useState(1);
 
-  // ---------------------------------------------------------------------
-  // TODO: conectar al backend real (aún no existe /admin/facturas).
-  // En cuanto responda, la tabla se llena sola con lo que devuelva.
-  // Sugerencia de ruta: GET /admin/facturas?estado=&tipoGasto=&desde=&hasta=&pagina=
-  // ---------------------------------------------------------------------
   useEffect(() => {
     const cargarFacturas = async () => {
       setCargando(true);
@@ -127,8 +152,6 @@ export default function AdminFacturas() {
         setFacturas(Array.isArray(lista) ? lista : []);
         setTotalRegistros(data?.total ?? (Array.isArray(lista) ? lista.length : 0));
       } catch (err) {
-        // El backend de listado aún no existe (o falló): dejamos la tabla
-        // vacía en vez de mostrar datos falsos.
         console.warn("No se pudo cargar /admin/facturas.", err);
         setFacturas([]);
         setTotalRegistros(0);
@@ -139,11 +162,8 @@ export default function AdminFacturas() {
     };
     cargarFacturas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroEstado, filtroTipoGasto, fechaInicio, fechaFin, paginaActual]);
+  }, [filtroEstado, filtroTipoGasto, fechaInicio, fechaFin, paginaActual, recargarTrigger]);
 
-  // Filtrado en cliente sobre lo que haya devuelto el backend. Útil como
-  // capa extra aunque idealmente el filtrado real lo haga el backend
-  // (por eso también se envían estado/tipoGasto como params en el fetch).
   const facturasFiltradas = useMemo(() => {
     return facturas.filter((f) => {
       if (filtroEstado && f.estado !== filtroEstado) return false;
@@ -165,10 +185,6 @@ export default function AdminFacturas() {
     return "afac-badge-estado--pendiente";
   };
 
-  // La factura se considera "completa" solo cuando el usuario ya subió
-  // el XML y el PDF. Esto es lo que decide qué botón mostrar en Acción,
-  // independientemente del campo "estado" (que puede reflejar otra cosa,
-  // como una validación posterior del administrador).
   const facturaCompleta = (f) => Boolean(f.tieneXml && f.tienePdf);
 
   return (
@@ -211,9 +227,10 @@ export default function AdminFacturas() {
             <div className="menu-icon afac-reporte-pendientes"></div>
             Reporte de Pendientes
           </button>
-          <button className="menu-item" onClick={() => navigate("/admin/usuarios")}>
-            <div className="menu-icon afac-usuarios"></div>
-            Usuarios
+
+          <button className="menu-item" onClick={() => navigate("/admin/reporte-ventas-mes")}>
+            <div className="menu-icon afac-reporte-ventas"></div>
+            Reporte de ventas del mes
           </button>
           <button className="menu-item" onClick={() => navigate("/admin/perfil")}>
             <div className="menu-icon afac-perfil"></div>
@@ -346,10 +363,14 @@ export default function AdminFacturas() {
                       <td>
                         <span className="afac-archivos-iconos">
                           {f.tieneFoto && (
-                            <span title="Foto del comprobante subida">📷</span>
+                            <span className="afac-icono-archivo" title="Foto del comprobante subida">
+                              <IconoCamara />
+                            </span>
                           )}
                           {f.tieneXml && f.tienePdf && (
-                            <span title="XML y PDF de la factura subidos">🗎</span>
+                            <span className="afac-icono-archivo" title="XML y PDF de la factura subidos">
+                              <IconoDocumento />
+                            </span>
                           )}
                           {!f.tieneFoto && !(f.tieneXml && f.tienePdf) && (
                             <span className="afac-texto-gris">—</span>
@@ -360,14 +381,15 @@ export default function AdminFacturas() {
                         {facturaCompleta(f) ? (
                           <button
                             className="afac-ver-detalle"
-                            onClick={() => navigate(`/admin/facturas/${f.id}`)}
+                            onClick={() => handleVerDetalle(f)}
+                            disabled={cargandoDetalle}
                           >
                             Ver detalle
                           </button>
                         ) : (
                           <button
                             className="afac-btn-subir-factura"
-                            onClick={() => navigate(`/admin/facturas/${f.id}/subir`)}
+                            onClick={() => setIdFacturaModal(f.id)}
                           >
                             Subir Factura
                           </button>
@@ -433,10 +455,23 @@ export default function AdminFacturas() {
           </section>
         </main>
       </div>
-      <ModalCerrarSesion 
-        isOpen={modalCerrarSesionAbierto} 
-        onClose={() => setModalCerrarSesionAbierto(false)} 
-        onConfirm={handleCerrarSesion} 
+      <ModalCerrarSesion
+        isOpen={modalCerrarSesionAbierto}
+        onClose={() => setModalCerrarSesionAbierto(false)}
+        onConfirm={handleCerrarSesion}
+      />
+
+      {idFacturaModal && (
+        <ModalSubirFactura
+          idParam={idFacturaModal}
+          onClose={() => setIdFacturaModal(null)}
+          onExito={() => setRecargarTrigger((prev) => prev + 1)}
+        />
+      )}
+
+      <ModalDetalleFactura
+        factura={facturaDetalle}
+        onClose={() => setFacturaDetalle(null)}
       />
     </div>
   );

@@ -12,12 +12,24 @@ import RutaPrivada from "./components/RutaPrivada"; // 👈 Importa tu component
 import USubirFoto from "./pages/USubirFoto";
 import USubirFactura from "./pages/USubirFactura";
 
+import ReportePorUsuario from "./pages/ReportePorUsuario";
+
 import UMisFotografias from "./pages/UMisFotografias";
 import UDashboard from "./pages/UDashboard";
 import UPerfil from "./pages/UPerfil";
 
 import AdminFacturas from "./pages/AdminFacturas";
 import AdminValidaciones from "./pages/AdminValidaciones";
+import ReporteVentasMes from "./pages/ReporteVentasMes";
+
+import ReportesGlobales from "./pages/ReportesGlobales";
+
+import ReportePendientes from "./pages/ReportePendientes";
+
+import PerfilAdministrador from "./pages/Perfiladministrador";
+
+
+
 import { ToastProvider } from './components/Toast';
 
 function App() {
@@ -127,6 +139,58 @@ function App() {
             </RutaPrivada>
           }
         />
+
+
+        <Route
+  path="/admin/reporte-usuario"
+  element={
+    <RutaPrivada rolPermitido="ADMINISTRADOR">
+      <ReportePorUsuario />
+    </RutaPrivada>
+  }
+/>
+
+        <Route
+          path="/admin/reporte-ventas-mes"
+          element={
+            <RutaPrivada rolPermitido="ADMINISTRADOR">
+              <ReporteVentasMes />
+            </RutaPrivada>
+          }
+        />
+
+
+        <Route
+  path="/admin/reportes-global"
+  element={
+    <RutaPrivada rolPermitido="ADMINISTRADOR">
+      <ReportesGlobales />
+    </RutaPrivada>
+  }
+/>
+
+  <Route
+  path="/admin/reporte-pendientes"
+  element={
+    <RutaPrivada rolPermitido="ADMINISTRADOR">
+      <ReportePendientes />
+    </RutaPrivada>
+  }
+/>
+
+
+<Route
+  path="/admin/perfil"
+  element={
+    <RutaPrivada rolPermitido="ADMINISTRADOR">
+      <PerfilAdministrador />
+    </RutaPrivada>
+  }
+/>
+
+   
+
+
       </Routes>
     </Router>
    </ToastProvider>

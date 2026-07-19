@@ -1,0 +1,574 @@
+/* ==========================================================================
+   LAYOUT BASE Y SIDEBAR (mismo patrón que AdminFacturas.css)
+   ========================================================================= */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #E6F2F7;
+  font-family: sans-serif;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after { box-sizing: inherit; }
+
+.panel-container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  flex-direction: row;
+  background-color: #E6F2F7;
+}
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.panel-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background-color: #0059B3;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 0;
+  flex-shrink: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.top-blue-bar {
+  width: 100%;
+  height: 75px;
+  background-color: #0059B3;
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  border-left: 6px solid #E6F2F7;
+  box-sizing: border-box;
+}
+
+.asf-topbar-titulo {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.panel-main {
+  flex: 1;
+  padding: 1.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  overflow-y: auto;
+}
+
+.sidebar-top-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 1.2rem;
+  margin-bottom: 2.5rem;
+  height: 90px;
+}
+
+.sidebar-main-icon {
+  width: 48px;
+  height: 48px;
+  background: url("/purchase-order.png") no-repeat center / contain;
+  flex-shrink: 0;
+}
+
+.sidebar-header-text h2 {
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin: 0;
+  font-weight: 700;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.8rem;
+  flex: 1;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.7rem 1.1rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.menu-icon {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.menu-item.active {
+  background-color: rgba(255, 255, 255, 0.45);
+  color: #1A2530 !important;
+  font-weight: 600;
+}
+
+.sidebar-logout {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.logout-icon {
+  width: 24px;
+  height: 24px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' /%3E%3Cpolyline points='16 17 21 12 16 7' /%3E%3Cline x1='21' y1='12' x2='9' y2='12' /%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+.hamburger-btn { display: none; }
+
+@media (max-width: 850px) {
+  .panel-container { flex-direction: column; }
+  .panel-sidebar { width: 100%; min-width: 100%; padding: 0; height: 75px; min-height: auto; }
+  .sidebar-top-wrapper { margin-bottom: 0; height: 100%; }
+  .top-blue-bar { display: none; }
+  .sidebar-menu {
+    display: none; position: absolute; top: 75px; left: 0; width: 100%;
+    max-height: calc(100vh - 75px); overflow-y: auto; background-color: #0059B3; padding: 1rem; z-index: 100;
+  }
+  .sidebar-logout { margin-top: 1.5rem; padding: 0.75rem 1.2rem; }
+  .sidebar-menu.show { display: flex; flex-direction: column; }
+  .hamburger-btn { display: block; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; }
+}
+@media (min-width: 851px) { .hamburger-btn { display: none; } }
+
+/* Íconos del sidebar admin (mismos SVG que AdminFacturas.css) */
+.menu-icon.afac-facturas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1zM9 9h6M9 13h6M9 17h4'/%3E%3C/svg%3E"); }
+.menu-item.active .menu-icon.afac-facturas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231A2530' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1zM9 9h6M9 13h6M9 17h4'/%3E%3C/svg%3E"); }
+.menu-icon.afac-validaciones { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9 12l2 2 4-4M7 3h10a1 1 0 011 1v16l-6-3-6 3V4a1 1 0 011-1z'/%3E%3C/svg%3E"); }
+.menu-icon.afac-reporte-usuario { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Ccircle cx='10' cy='8' r='3'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4 20a6 6 0 0112 0M16 10l4 4m0-4l-4 4'/%3E%3C/svg%3E"); }
+.menu-icon.afac-reportes-global { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4 20V10m6 10V4m6 16v-7'/%3E%3C/svg%3E"); }
+.menu-icon.afac-reporte-pendientes { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 7v5l3 3'/%3E%3C/svg%3E"); }
+.menu-icon.afac-reporte-ventas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E"); }
+.menu-icon.afac-perfil { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'/%3E%3C/svg%3E"); }
+
+/* ==========================================================================
+   Info card (usuario, concepto, monto, deducción) + foto grande
+   ========================================================================= */
+.asf-alerta { padding: 0.85rem 1.1rem; border-radius: 12px; font-size: 0.85rem; }
+.asf-alerta--error { background-color: #FEE2E2; color: #DC2626; }
+.asf-alerta--exito { background-color: #D1FAE5; color: #059669; }
+.asf-cargando { color: #64748b; font-size: 0.9rem; }
+
+.asf-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.asf-card--info { padding: 1.4rem 1.6rem; }
+
+.asf-info-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.asf-foto-grande-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+  border-radius: 14px;
+  overflow: hidden;
+  background-color: #0f172a;
+}
+
+.asf-foto-grande {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  display: block;
+  background-color: #0f172a;
+}
+
+.asf-foto-grande-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.asf-info-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-content: start;
+}
+
+.asf-info-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.asf-info-etiqueta {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.asf-info-valor {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1A2530;
+  word-break: break-word;
+}
+
+.asf-card-header {
+  background-color: #003D80;
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+}
+.asf-card-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+
+.asf-card-body { padding: 1.6rem; box-sizing: border-box; }
+
+.asf-uploads-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.asf-upload-columna {
+  min-width: 0;
+}
+
+.asf-upload-etiqueta { font-size: 0.85rem; font-weight: 700; color: #1A2530; margin-bottom: 0.6rem; }
+.asf-requerido { color: #DC2626; }
+
+.asf-upload-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1.2rem;
+  cursor: pointer;
+  position: relative;
+  background-color: #F8FAFC;
+  text-align: center;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.asf-upload-box:hover { border-color: #0059B3; background-color: #E6F2F7; }
+.asf-upload-box--con-archivo { border-style: solid; border-color: #0059B3; background-color: #E6F2F7; }
+.asf-upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.asf-upload-icono { font-size: 1.7rem; color: #94a3b8; }
+.asf-upload-box--con-archivo .asf-upload-icono { color: #0059B3; }
+.asf-upload-titulo { font-size: 0.9rem; font-weight: 700; color: #0059B3; }
+.asf-upload-subtitulo { font-size: 0.75rem; color: #94a3b8; }
+.asf-upload-nombre-archivo {
+  font-size: 0.78rem;
+  color: #003366;
+  font-weight: 600;
+  padding: 0 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+}
+
+.asf-campos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.2rem;
+  margin-top: 1.8rem;
+}
+
+.asf-campo { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.asf-campo label { font-size: 0.72rem; font-weight: 700; color: #4b5563; }
+.asf-campo input {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.88rem;
+  color: #1A2530;
+  background-color: #F8FAFC;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asf-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.asf-btn {
+  padding: 0.65rem 1.6rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.asf-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.asf-btn--primario { background-color: #003D80; color: #ffffff; }
+.asf-btn--primario:hover:not(:disabled) { background-color: #003366; }
+.asf-btn--secundario { background-color: #ffffff; color: #334155; border-color: #cbd5e1; }
+.asf-btn--secundario:hover:not(:disabled) { background-color: #f1f5f9; }
+
+@media (max-width: 900px) {
+  .asf-uploads-grid { grid-template-columns: 1fr; }
+  .asf-campos { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .asf-campos { grid-template-columns: 1fr; }
+  .asf-acciones { flex-direction: column-reverse; }
+  .asf-btn { width: 100%; }
+}
+
+/* ==========================================================================
+   ModalSubirFactura — overlay del modal
+   ========================================================================= */
+.asf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.asf-modal-box {
+  background-color: #E6F2F7;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.asf-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0059B3;
+  padding: 1.1rem 1.6rem;
+  border-radius: 18px 18px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  gap: 1rem;
+}
+
+.asf-modal-titulo {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.asf-modal-cerrar {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  line-height: 1;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.asf-modal-cerrar:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.asf-modal-contenido {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  box-sizing: border-box;
+}
+
+/* Forzamos que los grids internos se vean bien dentro del modal
+   sin importar el ancho de la ventana (el modal siempre es angosto) */
+.asf-modal-box .asf-uploads-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.asf-modal-box .asf-campos {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ---------- Lightbox (zoom de la imagen a pantalla completa) ---------- */
+.asf-lightbox {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+  box-sizing: border-box;
+  cursor: zoom-out;
+}
+
+.asf-lightbox-imagen {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.asf-lightbox-cerrar {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #ffffff;
+  font-size: 1.1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asf-lightbox-cerrar:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- Responsive del modal ---------- */
+@media (max-width: 700px) {
+  .asf-modal-box .asf-uploads-grid {
+    grid-template-columns: 1fr;
+  }
+  .asf-modal-box .asf-campos {
+    grid-template-columns: 1fr;
+  }
+  .asf-info-layout {
+    grid-template-columns: 1fr;
+  }
+  .asf-foto-grande {
+    height: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* En móvil el modal se convierte en pantalla completa: más cómodo
+     para tocar los botones y llenar los campos */
+  .asf-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  .asf-modal-box {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .asf-modal-header {
+    border-radius: 0;
+  }
+  .asf-modal-contenido {
+    padding: 1rem;
+  }
+  .asf-info-datos {
+    grid-template-columns: 1fr;
+  }
+  .asf-card--info {
+    padding: 1.1rem;
+  }
+  .asf-card-body {
+    padding: 1.1rem;
+  }
+}
+
+/* ---------- Select de deducción dentro del modal ---------- */
+.asf-info-texto--deduccion {
+  grid-column: 1 / -1;
+}
+
+.asf-select-deduccion {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+  color: #334155;
+  font-family: inherit;
+  background-color: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asf-select-deduccion:focus {
+  outline: none;
+  border-color: #0059B3;
+  box-shadow: 0 0 0 3px rgba(0, 89, 179, 0.12);
+}
+
+.asf-nota-deduccion {
+  font-size: 0.72rem;
+  color: #B45309;
+  margin-top: 0.2rem;
+}

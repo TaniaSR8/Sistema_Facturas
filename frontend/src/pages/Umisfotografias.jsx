@@ -5,6 +5,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import ModalCerrarSesion from "../components/ModalCerrarSesion";
 import { useToast } from "../components/Toast";
 
+
+import ModalSubirFactura from "../components/ModalSubirFactura";
+
+
 const TIPOS_GASTO_RESPALDO = [{ valor: "", etiqueta: "Todos los tipos" }];
 const REGISTROS_POR_PAGINA = 5;
 
@@ -49,6 +53,16 @@ export default function UMisFotografias() {
 
   // Checkbox: guardando por fila
   const [guardandoId, setGuardandoId] = useState(null);
+
+  // ---------- Modal de Subir Factura (se abre al hacer clic en la miniatura) ----------
+  const [fotoParaSubir, setFotoParaSubir] = useState(null); // formato "p-<id>", igual que espera el modal
+
+  const abrirModalSubirFactura = (foto) => {
+    if (foto.facturaVinculada) return; // ya tiene factura real, no dejamos volver a subir
+    setFotoParaSubir(`p-${foto.id}`);
+  };
+
+  const cerrarModalSubirFactura = () => setFotoParaSubir(null);
 
   useEffect(() => {
     const cargarTiposGasto = async () => {
@@ -262,7 +276,21 @@ export default function UMisFotografias() {
                     fotos.map((foto) => (
                       <tr key={foto.id}>
                         <td>
-                          <img src={foto.fotoUrl} alt="Ticket" className="umf-miniatura" />
+                          <img
+                            src={foto.fotoUrl}
+                            alt="Ticket"
+                            className="umf-miniatura"
+                            onClick={() => abrirModalSubirFactura(foto)}
+                            style={{
+                              cursor: foto.facturaVinculada ? "default" : "pointer",
+                              opacity: foto.facturaVinculada ? 0.85 : 1,
+                            }}
+                            title={
+                              foto.facturaVinculada
+                                ? "Esta fotografía ya tiene una factura vinculada"
+                                : "Clic para subir la factura de este comprobante"
+                            }
+                          />
                         </td>
                         <td className="umf-texto-gris">{formatoFecha(foto.fecha)}</td>
                         <td>
@@ -352,6 +380,14 @@ export default function UMisFotografias() {
         onClose={() => setModalCerrarSesionAbierto(false)} 
         onConfirm={handleCerrarSesion} 
       />
+
+      {fotoParaSubir && (
+        <ModalSubirFactura
+          idParam={fotoParaSubir}
+          onClose={cerrarModalSubirFactura}
+          onExito={cargarFotos}
+        />
+      )}
     </div>
   );
 }

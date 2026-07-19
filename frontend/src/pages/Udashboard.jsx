@@ -5,7 +5,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import ModalCerrarSesion from "../components/ModalCerrarSesion";
 import { useToast } from "../components/Toast";
 
-const REGISTROS_POR_PAGINA = 10;
+
+import ModalDetalleFactura from "../components/ModalDetalleFactura";
+
+
+const REGISTROS_POR_PAGINA = 5;
 
 const claseEstado = (estado) => {
   if (estado === "FACTURADO") return "udb-badge-estado--validada";
@@ -52,6 +56,23 @@ export default function UDashboard() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
+
+  // ---------- Modal de Ver Detalle ----------
+  const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+  const verDetalleFactura = async (id) => {
+    setCargandoDetalle(true);
+    try {
+      const { data } = await api.get(`/facturas/${id}`);
+      setFacturaSeleccionada(data);
+    } catch (err) {
+      console.error("Error al obtener el detalle de la factura:", err);
+      addToast("No se pudo cargar el detalle de la factura.", "error");
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
 
   const cargarDashboard = useCallback(async () => {
     setCargando(true);
@@ -261,7 +282,8 @@ export default function UDashboard() {
                         <td>
                           <button
                             className="udb-ver-detalle"
-                            onClick={() => navigate(`/usuario/factura/${f.id}`)}
+                            onClick={() => verDetalleFactura(f.id)}
+                            disabled={cargandoDetalle}
                           >
                             Ver Detalle
                           </button>
@@ -318,10 +340,16 @@ export default function UDashboard() {
           </section>
         </main>
       </div>
-      <ModalCerrarSesion 
-        isOpen={modalCerrarSesionAbierto} 
-        onClose={() => setModalCerrarSesionAbierto(false)} 
-        onConfirm={handleCerrarSesion} 
+
+      <ModalCerrarSesion
+        isOpen={modalCerrarSesionAbierto}
+        onClose={() => setModalCerrarSesionAbierto(false)}
+        onConfirm={handleCerrarSesion}
+      />
+
+      <ModalDetalleFactura
+        factura={facturaSeleccionada}
+        onClose={() => setFacturaSeleccionada(null)}
       />
     </div>
   );
