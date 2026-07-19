@@ -182,4 +182,49 @@ router.put('/:id/subido-manual', async (req, res) => {
     }
 });
 
+// ///////////////////
+
+// GET /api/fotos/:id
+// Detalle de una foto pendiente, usado por AdminSubirFactura para saber
+// de qué usuario es y qué deducción/tipo de gasto ya eligió.
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await conexionBD.query(
+            `SELECT
+                ft.id,
+                ft.usuario_id,
+                ft.ruta,
+                ft.descripcion,
+                ft.monto,
+                ft.fecha,
+                ft.factura_id,
+                tg.descripcion AS tipoGasto,
+                df.descripcion AS deduccion,
+                CONCAT(u.nombre, ' ', u.apellidoPaterno, IFNULL(CONCAT(' ', u.apellidoMaterno), '')) AS nombreUsuario
+             FROM fotos_ticket ft
+             LEFT JOIN tipos_gasto tg       ON tg.codigo = ft.tipo_gasto_codigo
+             LEFT JOIN deduccion_factura df ON df.id = ft.deduccion_id
+             LEFT JOIN usuarios u           ON u.id = ft.usuario_id
+             WHERE ft.id = ?`,
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Foto no encontrada" });
+        }
+
+        const foto = rows[0];
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+        res.json({
+            ...foto,
+            fotoUrl: `${baseUrl}/${foto.ruta}`,
+        });
+    } catch (error) {
+        console.error("❌ Error al obtener detalle de foto:", error);
+        res.status(500).json({ error: "Error al obtener el detalle de la foto" });
+    }
+});
+
 module.exports = router;

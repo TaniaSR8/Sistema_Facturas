@@ -39,6 +39,20 @@ app.use('/api/facturas', facturasRoutes);
 const validacionesRoutes = require('./src/routes/validaciones');
 app.use('/api/validaciones', validacionesRoutes);
 
+const reportesGlobalesRoutes = require('./src/routes/reportesGlobales');
+app.use('/api/reportes-globales', reportesGlobalesRoutes);
+
+
+const reportesPendientesRoutes = require('./src/routes/reportesPendientes');
+app.use('/api/reportes-pendientes', reportesPendientesRoutes);
+
+const ventasMensualesRoutes = require('./src/routes/ventasMensuales');
+app.use('/api/ventas-mensuales', ventasMensualesRoutes);
+
+const reportesRoutes = require('./src/routes/reportes');
+app.use('/api/reportes', reportesRoutes);
+
+
 // Ruta raíz
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando ");
