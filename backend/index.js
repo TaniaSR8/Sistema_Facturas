@@ -47,6 +47,10 @@ const reportesPendientesRoutes = require('./src/routes/reportesPendientes');
 app.use('/api/reportes-pendientes', reportesPendientesRoutes);
 
 const ventasMensualesRoutes = require('./src/routes/ventasMensuales');
+
+const reportesContablesRoutes = require('./src/routes/reportesContables');
+app.use('/api/reportes', reportesContablesRoutes);
+
 app.use('/api/ventas-mensuales', ventasMensualesRoutes);
 
 const reportesRoutes = require('./src/routes/reportes');
