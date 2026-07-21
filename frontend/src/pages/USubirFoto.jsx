@@ -7,6 +7,10 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import ModalCerrarSesion from "../components/ModalCerrarSesion";
 import { useToast } from "../components/Toast";
 
+
+
+import { getDeducciones } from "../services/deduccionesService";
+
 const TIPOS_GASTO = [
   { codigo: "G01", descripcion: "Adquisición de mercancías" },
   { codigo: "G02", descripcion: "Devoluciones, descuentos o bonificaciones" },
@@ -86,8 +90,9 @@ function USubirFoto() {
   useEffect(() => {
     const cargarDeducciones = async () => {
       try {
-        // TODO: ajustar la ruta real de tu API para listar deduccion_factura
-        const { data } = await api.get("/deducciones/listar");
+        // Mismo endpoint real que ya usa ModalSubirFactura.jsx
+        // (GET /api/facturas/catalogos/deducciones)
+        const { data } = await getDeducciones();
         if (Array.isArray(data) && data.length > 0) {
           setDeducciones(data);
         }

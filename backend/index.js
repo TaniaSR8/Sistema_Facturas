@@ -126,8 +126,58 @@ app.get("/", (req, res) => {
   res.send("Servidor backend funcionando correctamente 🚀");
 });
 
+// Middleware to verify authorization token and roles
+function verificarAuth(rolesPermitidos = []) {
+  return (req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ mensaje: "No se proporcionó token de autorización." });
+      }
+
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({ mensaje: "Token con formato inválido." });
+      }
+
+      const payloadParts = token.split(".");
+      if (payloadParts.length < 2) {
+        return res.status(401).json({ mensaje: "Token inválido." });
+      }
+
+      const decoded = Buffer.from(payloadParts[1], "base64").toString("utf-8");
+      const parsed = JSON.parse(decoded);
+
+      // Validar expiración del token
+      if (parsed.exp) {
+        const now = Math.floor(Date.now() / 1000);
+        if (now > parsed.exp) {
+          return res.status(401).json({ 
+            mensaje: "La sesión ha expirado. Por favor, inicie sesión nuevamente.", 
+            expired: true 
+          });
+        }
+      }
+
+      // Validar rol
+      if (rolesPermitidos.length > 0) {
+        const userRol = (parsed.rol || "USUARIO").toUpperCase();
+        const roles = rolesPermitidos.map(r => r.toUpperCase());
+        if (!roles.includes(userRol)) {
+          return res.status(403).json({ mensaje: "Acceso denegado. No tiene los permisos necesarios." });
+        }
+      }
+
+      req.user = parsed;
+      next();
+    } catch (e) {
+      return res.status(401).json({ mensaje: "Token no válido o corrupto." });
+    }
+  };
+}
+
 // Endpoint para actualizar los datos del usuario en la base de datos MySQL
-app.put("/api/perfil/actualizar", async (req, res) => {
+app.put("/api/perfil/actualizar", verificarAuth(["SUPERADMIN", "ADMINISTRADOR", "USUARIO"]), async (req, res) => {
   const { nombre, correo, estado, telefono, numeroEmpleado, fechaCreacion } = req.body;
 
   // Validación de campos requeridos
@@ -395,12 +445,12 @@ async function actualizarUsuarioPorId(id, body, res) {
 }
 
 // Endpoint para actualizar un usuario de la lista de gestión por su ID (usado por el frontend)
-app.put("/api/usuarios/:id", async (req, res) => {
+app.put("/api/usuarios/:id", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   await actualizarUsuarioPorId(req.params.id, req.body, res);
 });
 
 // Mantener compatibilidad con llamadas antiguas que usaran /api/usuarios/actualizar pasándole el id en el body
-app.put("/api/usuarios/actualizar", async (req, res) => {
+app.put("/api/usuarios/actualizar", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   const id = req.body.id || req.body.numeroEmpleado || req.body.num;
   if (!id) {
     return res.status(400).json({ mensaje: "El ID es requerido para actualizar." });
@@ -409,7 +459,7 @@ app.put("/api/usuarios/actualizar", async (req, res) => {
 });
 
 // Endpoint para cambiar la contraseña en MySQL
-app.put("/api/perfil/cambiar-contrasena", async (req, res) => {
+app.put("/api/perfil/cambiar-contrasena", verificarAuth(["SUPERADMIN", "ADMINISTRADOR", "USUARIO"]), async (req, res) => {
   const { correo, contrasenaActual, nuevaContrasena } = req.body;
 
   if (!contrasenaActual || !nuevaContrasena || !correo) {
@@ -471,8 +521,25 @@ app.get("/api/politicas", async (req, res) => {
   }
 });
 
+// Endpoint para obtener las deducciones de factura en MySQL o fallback
+app.get("/api/deducciones/listar", verificarAuth(["SUPERADMIN", "ADMINISTRADOR", "USUARIO"]), async (req, res) => {
+  try {
+    const [rows] = await pool.execute("SELECT id, descripcion FROM deduccion_factura");
+    return res.status(200).json(rows);
+  } catch (error) {
+    console.warn("⚠️ No se pudieron obtener las deducciones de la BD:", error.message);
+    const fallbackDeducciones = [
+      { id: 1, descripcion: "Blupster a Blupster" },
+      { id: 2, descripcion: "Usuario pagó con tarjeta corporativa" },
+      { id: 3, descripcion: "Usuario compró con su propia tarjeta y facturó a Usuario" },
+      { id: 4, descripcion: "Usuario compró con tarjeta pero facturó a Blupster" }
+    ];
+    return res.status(200).json(fallbackDeducciones);
+  }
+});
+
 // Endpoint para actualizar las políticas de contraseña en MySQL
-app.put("/api/politicas/actualizar", async (req, res) => {
+app.put("/api/politicas/actualizar", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   console.log("BODY RECEIVED IN /api/politicas/actualizar:", req.body);
   
   const politicas = req.body || {};
@@ -521,7 +588,7 @@ app.put("/api/politicas/actualizar", async (req, res) => {
 
 
 // Endpoint para obtener todos los usuarios de la base de datos MySQL
-app.get("/api/usuarios", async (req, res) => {
+app.get("/api/usuarios", verificarAuth(["SUPERADMIN", "ADMINISTRADOR"]), async (req, res) => {
   try {
     const [rows] = await pool.execute("SELECT * FROM usuarios");
     const mapped = rows.map(emp => {
@@ -597,7 +664,7 @@ app.get("/api/usuarios", async (req, res) => {
 });
 
 // Endpoint para registrar nuevos usuarios en la base de datos MySQL
-app.post("/api/usuarios/register", async (req, res) => {
+app.post("/api/usuarios/register", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   const { numeroEmpleado, nombre, apellidoPaterno, apellidoMaterno, correo, contrasena, rfc, rol, telefono, estado } = req.body;
   
   if (!numeroEmpleado || !nombre || !correo || !contrasena || !rfc || !rol) {
@@ -665,7 +732,7 @@ app.post("/api/usuarios/register", async (req, res) => {
 });
 
 // Endpoint para obtener la configuración de límites de facturación y gastos
-app.get("/api/gastos/obtener", async (req, res) => {
+app.get("/api/gastos/obtener", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   try {
     // Consulta SQL para obtener el límite global empresarial:
     const [rowsConfig] = await pool.execute("SELECT valor FROM configuraciones WHERE clave = 'limite_empresarial' LIMIT 1");
@@ -771,7 +838,7 @@ app.get("/api/gastos/obtener", async (req, res) => {
 });
 
 // Endpoint para guardar la configuración de límites de facturación y gastos
-app.put("/api/gastos/actualizar", async (req, res) => {
+app.put("/api/gastos/actualizar", verificarAuth(["SUPERADMIN"]), async (req, res) => {
   const { limiteEmpresarial, empleados } = req.body;
 
   if (limiteEmpresarial === undefined || !Array.isArray(empleados)) {
@@ -825,7 +892,7 @@ app.put("/api/gastos/actualizar", async (req, res) => {
 });
 
 // Endpoint para obtener el perfil de un usuario
-app.get("/api/perfil", async (req, res) => {
+app.get("/api/perfil", verificarAuth(["SUPERADMIN", "ADMINISTRADOR", "USUARIO"]), async (req, res) => {
   const correoToken = getCorreoDesdeToken(req);
   const correo = req.query.correo || req.headers["correo"] || correoToken;
   
@@ -915,12 +982,13 @@ app.post("/api/usuarios/login", async (req, res) => {
       return res.status(401).json({ mensaje: "Contraseña incorrecta." });
     }
 
-    // Generar mock token JWT en base64
+    // Generar mock token JWT en base64 con expiración de 1 hora (3600 segundos)
     const payload = {
       id: user.id,
       nombre: user.nombre,
       correo: user.correo,
-      rol: user.rol || "USUARIO"
+      rol: user.rol || "USUARIO",
+      exp: Math.floor(Date.now() / 1000) + 3600
     };
     const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
     const mockToken = `header.${tokenBase64}.signature`;
@@ -938,11 +1006,13 @@ app.post("/api/usuarios/login", async (req, res) => {
     let rol = "SUPERADMIN";
     if (correo.includes("admin")) rol = "ADMINISTRADOR";
     
+    // Generar mock token con expiración de 1 hora
     const payload = {
       id: 999,
       nombre: "Usuario Simulado",
       correo: correo,
-      rol: rol
+      rol: rol,
+      exp: Math.floor(Date.now() / 1000) + 3600
     };
     const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
     const mockToken = `header.${tokenBase64}.signature`;

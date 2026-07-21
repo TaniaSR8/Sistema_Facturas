@@ -12,6 +12,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const msg = error.response.data?.mensaje || "";
+      if (msg.toLowerCase().includes("expir") || error.response.data?.expired) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("rol");
+        localStorage.removeItem("correo");
+        localStorage.removeItem("usuarioId");
+        window.location.href = "/login?expired=true";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const obtenerMensajeErrorApi = (error) => {
   if (!error.response) {
     return "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 3001.";

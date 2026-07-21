@@ -556,3 +556,67 @@ html, body, #root {
   .rg-acciones-fila { flex-direction: column; }
   .rg-paginacion { justify-content: center; text-align: center; }
 }
+
+
+/* ---------- Tarjetas del reporte contable (dentro de la pestaña) ---------- */
+.rg-tarjetas-contables {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+}
+
+.rg-tarjeta-contable {
+  background-color: #F8FAFC;
+  border-radius: 14px;
+  padding: 1.1rem 1.3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 4px solid transparent;
+}
+
+.rg-tarjeta-contable--ingreso { border-top-color: #059669; }
+.rg-tarjeta-contable--egreso { border-top-color: #DC2626; }
+.rg-tarjeta-contable--resultado-positivo { border-top-color: #1D4ED8; }
+.rg-tarjeta-contable--resultado-negativo { border-top-color: #B45309; }
+
+.rg-tarjeta-contable-titulo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.rg-tarjeta-contable-monto {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1A2530;
+}
+
+.rg-tarjeta-contable-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  padding-top: 0.4rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.rg-badge-contable {
+  display: inline-flex;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.rg-badge-contable--ingreso { background-color: #D1FAE5; color: #059669; }
+.rg-badge-contable--egreso-empresa { background-color: #FEE2E2; color: #DC2626; }
+.rg-badge-contable--egreso-reembolso { background-color: #FEF3C7; color: #B45309; }
+
+@media (max-width: 1000px) {
+  .rg-tarjetas-contables { grid-template-columns: 1fr; }
+}

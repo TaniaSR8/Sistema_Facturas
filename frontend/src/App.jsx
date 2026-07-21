@@ -26,6 +26,10 @@ import ReportesGlobales from "./pages/ReportesGlobales";
 
 import ReportePendientes from "./pages/ReportePendientes";
 
+import ReporteContable from "./pages/ReporteContable";
+
+
+
 import PerfilAdministrador from "./pages/Perfiladministrador";
 
 
@@ -184,6 +188,16 @@ function App() {
   element={
     <RutaPrivada rolPermitido="ADMINISTRADOR">
       <PerfilAdministrador />
+    </RutaPrivada>
+  }
+/>
+
+
+<Route
+  path="/admin/reporte-contable"
+  element={
+    <RutaPrivada rolPermitido="ADMINISTRADOR">
+      <ReporteContable />
     </RutaPrivada>
   }
 />

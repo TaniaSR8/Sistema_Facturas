@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/Login.css";
 
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
@@ -25,6 +25,13 @@ function Login() {
   const [tocadoCorreo, setTocadoCorreo] = useState(false);
   const [tocadoContrasena, setTocadoContrasena] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("expired") === "true") {
+      setMensaje("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+    }
+  }, []);
 
 
   const manejarSubmit = async (e) => {
