@@ -9,6 +9,16 @@ import ModalPoliticasContrasena from '../components/ModalPoliticasContrasena';
 import api, { obtenerMensajeErrorApi } from '../axios';
 import { useToast } from '../components/Toast';
 
+// 👇 NUEVO: mismo patrón que usan tus otras pantallas (UPerfil.jsx,
+// ReportePorUsuario.jsx, etc.) para convertir la fecha cruda de MySQL
+// (ISO: "2026-07-21T13:25:32.000Z") en algo legible.
+const formatoFecha = (fecha) => {
+  if (!fecha) return "—";
+  const d = new Date(fecha);
+  if (isNaN(d)) return fecha; // si no se puede parsear, mostramos el valor tal cual
+  return d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
 function PerfilSuperAdmin() {
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -264,7 +274,7 @@ function PerfilSuperAdmin() {
                   <div className="calendar-icon"></div>
                 </div>
                 <div className="date-value">
-                  {usuario.fechaCreacion}
+                  {formatoFecha(usuario.fechaCreacion)}
                 </div>
               </div>
             </div>

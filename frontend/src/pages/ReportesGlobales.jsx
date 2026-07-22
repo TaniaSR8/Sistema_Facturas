@@ -4,7 +4,8 @@ import "../css/ReportesGlobales.css";
 import React, { useState, useEffect } from "react";
 import ModalCerrarSesion from "../components/ModalCerrarSesion";
 import { useToast } from "../components/Toast";
-import html2pdf from "html2pdf.js";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const formatoMoneda = (valor) =>
   Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -216,74 +217,44 @@ export default function ReportesGlobales() {
     URL.revokeObjectURL(url);
   };
 
-  const exportarPendientesPdf = async () => {
+  const exportarPendientesPdf = () => {
     if (pendientes.length === 0) {
       addToast("No hay registros para exportar.", "warning");
       return;
     }
     setExportandoPdfPendientes(true);
 
-    const filasHtml = pendientes
-      .map(
-        (p) => `
-        <tr>
-          <td>${p.usuario}</td>
-          <td>${p.concepto}</td>
-          <td>${p.tipoGasto}</td>
-          <td>${formatoFecha(p.fecha)}</td>
-          <td>${formatoMoneda(p.monto)}</td>
-          <td>${p.estado}</td>
-          <td>${p.requiereFactura ? "Sí" : "No"}</td>
-          <td>${p.requiereRecibo ? "Sí" : "No"}</td>
-        </tr>`
-      )
-      .join("");
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; color: #1A2530; padding: 10px;">
-        <h1 style="font-size: 18px;">Facturas a Solicitar / Recibos a Emitir</h1>
-        <table style="width:100%; border-collapse: collapse; margin-top: 12px;">
-          <thead>
-            <tr>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Usuario</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Concepto</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Tipo de Gasto</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Fecha</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Monto</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Estado</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Solicitar Factura</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Emitir Recibo</th>
-            </tr>
-          </thead>
-          <tbody>${filasHtml}</tbody>
-        </table>
-      </div>
-    `;
-
-    const contenedor = document.createElement("div");
-    contenedor.style.position = "fixed";
-    contenedor.style.top = "0";
-    contenedor.style.left = "-9999px";
-    contenedor.innerHTML = html;
-    document.body.appendChild(contenedor);
-
     try {
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: "facturas-solicitar-recibos-emitir.pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-        })
-        .from(contenedor)
-        .save();
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+      doc.setFontSize(14);
+      doc.setTextColor(26, 37, 48);
+      doc.text("Facturas a Solicitar / Recibos a Emitir", 14, 15);
+
+      autoTable(doc, {
+        startY: 20,
+        head: [["Usuario", "Concepto", "Tipo de Gasto", "Fecha", "Monto", "Estado", "Solicitar Factura", "Emitir Recibo"]],
+        body: pendientes.map((p) => [
+          p.usuario,
+          p.concepto,
+          p.tipoGasto,
+          formatoFecha(p.fecha),
+          formatoMoneda(p.monto),
+          p.estado,
+          p.requiereFactura ? "Sí" : "No",
+          p.requiereRecibo ? "Sí" : "No",
+        ]),
+        headStyles: { fillColor: [0, 89, 179], textColor: 255, fontSize: 8 },
+        bodyStyles: { fontSize: 8 },
+        styles: { cellPadding: 2 },
+      });
+
+      doc.save("facturas-solicitar-recibos-emitir.pdf");
       addToast("PDF generado correctamente.", "success");
     } catch (err) {
       console.error(err);
       addToast("No se pudo generar el PDF.", "error");
     } finally {
-      document.body.removeChild(contenedor);
       setExportandoPdfPendientes(false);
     }
   };
@@ -369,108 +340,89 @@ export default function ReportesGlobales() {
     URL.revokeObjectURL(url);
   };
 
-  const exportarContablePdf = async () => {
+  const exportarContablePdf = () => {
     if (!reporteContable || reporteContable.detalle.length === 0) {
       addToast("No hay registros para exportar.", "warning");
       return;
     }
     setExportandoPdfContable(true);
 
-    const filasHtml = reporteContable.detalle
-      .map(
-        (d) => `
-        <tr>
-          <td>${formatoFecha(d.fecha)}</td>
-          <td>${d.rfc}</td>
-          <td>${d.razonSocial}</td>
-          <td>${formatoMoneda(d.subtotal)}</td>
-          <td>${formatoMoneda(d.iva)}</td>
-          <td>${formatoMoneda(d.total)}</td>
-          <td>${etiquetaTipoContable(d.tipo)}</td>
-        </tr>`
-      )
-      .join("");
-
-    const fechaHoy = new Date().toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; color: #1A2530; padding: 10px; background:#ffffff;">
-        <h1 style="font-size: 20px; margin-bottom: 2px;">Sistema de Control de Facturas</h1>
-        <p style="font-size: 13px; color: #64748b; margin-top: 0;">Reporte Contable General — Generado el ${fechaHoy}</p>
-
-        <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
-          <tr>
-            <td style="width:33%; background:#D1FAE5; border-radius:8px; padding:12px;">
-              <strong style="font-size:11px; color:#059669;">TOTAL INGRESOS</strong><br/>
-              <span style="font-size:16px; font-weight:bold;">${formatoMoneda(reporteContable.ingresos.total)}</span>
-            </td>
-            <td style="width:2%;"></td>
-            <td style="width:33%; background:#FEE2E2; border-radius:8px; padding:12px;">
-              <strong style="font-size:11px; color:#DC2626;">TOTAL EGRESOS</strong><br/>
-              <span style="font-size:16px; font-weight:bold;">${formatoMoneda(reporteContable.egresos.total)}</span>
-            </td>
-            <td style="width:2%;"></td>
-            <td style="width:33%; background:#DBEAFE; border-radius:8px; padding:12px;">
-              <strong style="font-size:11px; color:#1D4ED8;">RESULTADO CONTABLE</strong><br/>
-              <span style="font-size:16px; font-weight:bold;">${formatoMoneda(reporteContable.resultado)}</span>
-            </td>
-          </tr>
-        </table>
-
-        <table style="width:100%; border-collapse: collapse;">
-          <thead>
-            <tr>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Fecha</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">RFC</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Razón Social</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Subtotal</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">IVA</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Total</th>
-              <th style="background:#0059B3;color:#fff;padding:8px;font-size:11px;text-align:left;">Tipo</th>
-            </tr>
-          </thead>
-          <tbody>${filasHtml}</tbody>
-        </table>
-      </div>
-    `;
-
-    const contenedor = document.createElement("div");
-    contenedor.style.position = "fixed";
-    contenedor.style.top = "0";
-    contenedor.style.left = "0";
-    contenedor.style.zIndex = "-9999";
-    contenedor.style.backgroundColor = "#ffffff";
-    contenedor.style.width = "1400px";
-    contenedor.innerHTML = html;
-    document.body.appendChild(contenedor);
-
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
     try {
-      await html2pdf()
-        .set({
-          margin: 10,
-          filename: "reporte-contable-general.pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-        })
-        .from(contenedor)
-        .save();
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const fechaHoy = new Date().toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      doc.setFontSize(16);
+      doc.setTextColor(0, 89, 179);
+      doc.text("Sistema de Control de Facturas", 14, 15);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Reporte Contable General — Generado el ${fechaHoy}`, 14, 21);
+
+      // ---------- Tarjetas de resumen ----------
+      const boxY = 27, boxW = 85, boxH = 20, gap = 5;
+      const boxes = [
+        {
+          x: 14,
+          label: "TOTAL INGRESOS",
+          value: formatoMoneda(reporteContable.ingresos.total),
+          bg: [209, 250, 229],
+          color: [5, 150, 105],
+        },
+        {
+          x: 14 + boxW + gap,
+          label: "TOTAL EGRESOS",
+          value: formatoMoneda(reporteContable.egresos.total),
+          bg: [254, 226, 226],
+          color: [220, 38, 38],
+        },
+        {
+          x: 14 + (boxW + gap) * 2,
+          label: "RESULTADO CONTABLE",
+          value: formatoMoneda(reporteContable.resultado),
+          bg: [219, 234, 254],
+          color: [29, 78, 216],
+        },
+      ];
+
+      boxes.forEach((b) => {
+        doc.setFillColor(...b.bg);
+        doc.roundedRect(b.x, boxY, boxW, boxH, 2, 2, "F");
+        doc.setFontSize(8);
+        doc.setTextColor(...b.color);
+        doc.text(b.label, b.x + 4, boxY + 7);
+        doc.setFontSize(13);
+        doc.text(b.value, b.x + 4, boxY + 15);
+      });
+
+      // ---------- Tabla de detalle ----------
+      autoTable(doc, {
+        startY: boxY + boxH + 8,
+        head: [["Fecha", "RFC", "Razón Social", "Subtotal", "IVA", "Total", "Tipo"]],
+        body: reporteContable.detalle.map((d) => [
+          formatoFecha(d.fecha),
+          d.rfc,
+          d.razonSocial,
+          formatoMoneda(d.subtotal),
+          formatoMoneda(d.iva),
+          formatoMoneda(d.total),
+          etiquetaTipoContable(d.tipo),
+        ]),
+        headStyles: { fillColor: [0, 89, 179], textColor: 255, fontSize: 8 },
+        bodyStyles: { fontSize: 8 },
+        styles: { cellPadding: 2 },
+      });
+
+      doc.save("reporte-contable-general.pdf");
       addToast("PDF generado correctamente.", "success");
     } catch (err) {
       console.error(err);
       addToast("No se pudo generar el PDF.", "error");
     } finally {
-      setTimeout(() => {
-        if (document.body.contains(contenedor)) {
-          document.body.removeChild(contenedor);
-        }
-      }, 2000);
       setExportandoPdfContable(false);
     }
   };

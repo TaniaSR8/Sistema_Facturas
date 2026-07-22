@@ -278,7 +278,7 @@ function USubirFoto() {
               <div className="menu-icon fotos"></div>
               Mis Fotografías
             </button>
-          <button className="menu-item" onClick={() => navigate("/perfil")}>
+          <button className="menu-item" onClick={() => navigate("/usuario/perfil")}>
             <div className="menu-icon perfil"></div>
             Mi Perfil
           </button>
