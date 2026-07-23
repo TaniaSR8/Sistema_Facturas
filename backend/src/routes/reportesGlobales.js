@@ -10,6 +10,15 @@ const esFacturadoAPersona = (descripcionDeduccion) => {
     return descripcionDeduccion.toLowerCase().includes('facturó a usuario');
 };
 
+// Agregar junto a esFacturadoAPersona y etiquetaEstado
+const diasParaCierreMensual = () => {
+    const hoy = new Date();
+    const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const msPorDia = 1000 * 60 * 60 * 24;
+    return Math.ceil((ultimoDiaMes - hoy) / msPorDia);
+};
+
+
 const etiquetaEstado = (estado) => {
     if (estado === 'FACTURADO') return 'VIGENTE';
     if (estado === 'PENDIENTE') return 'PENDIENTE';
@@ -29,13 +38,14 @@ router.get('/diot', async (req, res) => {
             SELECT
                 f.emisor_rfc,
                 f.emisor_nombre,
+                f.iva,
                 f.total,
                 f.estado,
                 tg.descripcion AS tipoGasto,
                 df.descripcion AS deduccionDescripcion
             FROM facturas f
-            LEFT JOIN tipos_gasto tg ON tg.codigo = f.tipo_gasto_codigo
-            LEFT JOIN deduccion_factura df ON df.id = f.deduccion_id
+                     LEFT JOIN tipos_gasto tg ON tg.codigo = f.tipo_gasto_codigo
+                     LEFT JOIN deduccion_factura df ON df.id = f.deduccion_id
             WHERE 1 = 1
         `;
         const params = [];
@@ -66,13 +76,14 @@ router.get('/diot', async (req, res) => {
                 grupos.set(f.emisor_rfc, {
                     rfc: f.emisor_rfc,
                     razonSocial: f.emisor_nombre,
-                    empresa: { facturas: 0, total: 0, tipos: new Set(), estados: new Set() },
-                    usuario: { facturas: 0, total: 0, tipos: new Set(), estados: new Set() },
+                    empresa: { facturas: 0, iva: 0, total: 0, tipos: new Set(), estados: new Set() },
+                    usuario: { facturas: 0, iva: 0, total: 0, tipos: new Set(), estados: new Set() },
                 });
             }
             const grupo = grupos.get(f.emisor_rfc);
             const destino = esFacturadoAPersona(f.deduccionDescripcion) ? 'usuario' : 'empresa';
             grupo[destino].facturas += 1;
+            grupo[destino].iva += Number(f.iva || 0);
             grupo[destino].total += Number(f.total);
             grupo[destino].tipos.add(f.tipoGasto || 'Sin clasificar');
             grupo[destino].estados.add(etiquetaEstado(f.estado));
@@ -84,6 +95,7 @@ router.get('/diot', async (req, res) => {
             const estados = [...sub.estados];
             return {
                 facturas: sub.facturas,
+                iva: sub.iva,
                 total: sub.total,
                 tipoGasto: tipos.length === 1 ? tipos[0] : 'VARIOS',
                 estado: estados.length === 1 ? estados[0] : 'PENDIENTE',
@@ -186,7 +198,11 @@ router.get('/pendientes', async (req, res) => {
             requiereRecibo: esFacturadoAPersona(r.deduccionDescripcion),
         }));
 
-        res.json({ pendientes: resultado, total: resultado.length });
+        // 👇 NUEVO — aviso si hay algo pendiente de recibo/factura y quedan 5 días o menos
+        const hayPendientesUrgentes = resultado.some((r) => r.requiereFactura || r.requiereRecibo);
+        const warning = hayPendientesUrgentes && diasParaCierreMensual() <= 5;
+
+        res.json({ pendientes: resultado, total: resultado.length, warning, diasParaCierre: diasParaCierreMensual() });
     } catch (error) {
         console.error("❌ Error al listar pendientes:", error);
         res.status(500).json({ error: "Error al listar facturas/recibos pendientes" });

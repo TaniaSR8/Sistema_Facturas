@@ -2,11 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const gastosController = require('../controllers/gastosController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-// Ruta para obtener presupuesto global y usuarios
-router.get('/obtener', gastosController.obtenerPresupuesto);
+// Ver el presupuesto: SUPERADMIN y ADMINISTRADOR (el admin solo lee,
+// su frontend no tendrá ningún formulario de edición).
+router.get('/obtener', authMiddleware(['SUPERADMIN', 'ADMINISTRADOR']), gastosController.obtenerPresupuesto);
 
-// Ruta para actualizar presupuesto global y usuarios
-router.put('/actualizar', gastosController.actualizarPresupuesto);
+// Editar el presupuesto: SOLO SUPERADMIN. Aunque alguien intente llamar
+// este endpoint directamente (Postman, DevTools, etc.), el backend
+// rechaza con 403 a cualquiera que no sea SUPERADMIN.
+router.put('/actualizar', authMiddleware(['SUPERADMIN']), gastosController.actualizarPresupuesto);
 
 module.exports = router;

@@ -5,6 +5,21 @@ const fs = require('fs');
 const { parseStringPromise } = require('xml2js');
 const conexionBD = require('../config/db'); // pool de mysql2/promise
 
+
+// Agregar cerca del inicio del archivo, junto a los demás helpers
+const esFacturadoAPersonaFactura = (descripcionDeduccion) => {
+    if (!descripcionDeduccion) return false;
+    return descripcionDeduccion.toLowerCase().includes('facturó a usuario');
+};
+
+const diasParaCierreMensualFactura = () => {
+    const hoy = new Date();
+    const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const msPorDia = 1000 * 60 * 60 * 24;
+    return Math.ceil((ultimoDiaMes - hoy) / msPorDia);
+};
+
+
 // Configuración de Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -315,6 +330,20 @@ router.get('/dashboard', async (req, res) => {
             [usuarioId]
         );
 
+        // 👇 NUEVO — ¿este usuario tiene facturas facturadas a su nombre (reembolso)?
+        const [reembolsosRows] = await conexionBD.query(
+            `SELECT f.total, df.descripcion AS deduccionDescripcion
+             FROM facturas f
+             LEFT JOIN deduccion_factura df ON df.id = f.deduccion_id
+             WHERE f.usuario_id = ?`,
+            [usuarioId]
+        );
+        const totalReembolso = reembolsosRows
+            .filter((r) => esFacturadoAPersonaFactura(r.deduccionDescripcion))
+            .reduce((acc, r) => acc + Number(r.total), 0);
+
+        // ---------- Tabla de facturas del usuario ----------
+
         // ---------- Tabla de facturas del usuario ----------
         let sql = `
             SELECT 
@@ -346,6 +375,9 @@ router.get('/dashboard', async (req, res) => {
         const inicio = (paginaNum - 1) * porPaginaNum;
         const facturasPagina = todas.slice(inicio, inicio + porPaginaNum);
 
+        const diasParaCierre = diasParaCierreMensualFactura();
+        const warning = totalReembolso > 0 && diasParaCierre <= 5;
+
         res.json({
             resumen: {
                 pendientesFotos,
@@ -354,7 +386,12 @@ router.get('/dashboard', async (req, res) => {
             },
             facturas: facturasPagina,
             total: todas.length,
+            warning,          // 👈 NUEVO
+            totalReembolso,   // 👈 NUEVO (por si lo quieres mostrar en el mensaje)
+            diasParaCierre,   // 👈 NUEVO
         });
+
+
     } catch (error) {
         console.error("❌ Error al obtener dashboard de facturas:", error);
         res.status(500).json({ error: "Error al obtener el dashboard" });
@@ -394,6 +431,20 @@ router.get('/catalogos/deducciones', async (req, res) => {
 });
 
 // /////////////
+
+// GET /api/facturas/catalogos/medios-pago
+router.get('/catalogos/medios-pago', async (req, res) => {
+    try {
+        const [rows] = await conexionBD.query(
+            'SELECT codigo, descripcion FROM medios_pago ORDER BY descripcion'
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error("❌ Error al obtener medios de pago:", error);
+        res.status(500).json({ error: "Error al obtener catálogo de medios de pago" });
+    }
+});
+
 
 // ============================================================================
 // GET /api/facturas/:id

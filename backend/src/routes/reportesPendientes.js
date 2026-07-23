@@ -43,6 +43,8 @@ router.get('/resumen', async (req, res) => {
         const subtotal = total / 1.16;
         const iva = total - subtotal;
 
+        const diasParaCierre = diasParaCierreMensual();
+
         res.json({
             montoTotal: total,
             subtotal,
@@ -52,7 +54,8 @@ router.get('/resumen', async (req, res) => {
                 tipoGasto: t.tipoGasto || 'Sin clasificar',
                 monto: Number(t.monto || 0),
             })),
-            diasParaCierre: diasParaCierreMensual(),
+            diasParaCierre,
+            warning: totalPendientes > 0 && diasParaCierre <= 5, // 👈 NUEVO
         });
     } catch (error) {
         console.error("❌ Error al obtener resumen de pendientes:", error);
