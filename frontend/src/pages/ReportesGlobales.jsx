@@ -38,7 +38,8 @@ export default function ReportesGlobales() {
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modalCerrarSesionAbierto, setModalCerrarSesionAbierto] = useState(false);
-  const [tabActiva, setTabActiva] = useState("diot"); // diot | pendientes | contabilidad
+  const [tabActiva, setTabActiva] = useState("diot"); // diot | pendientes | contabilidad | presupuesto
+
 
   const handleCerrarSesion = () => {
     localStorage.removeItem("token");
@@ -79,6 +80,7 @@ export default function ReportesGlobales() {
   const [diotGranTotal, setDiotGranTotal] = useState(0);
   const [cargandoDiot, setCargandoDiot] = useState(false);
   const [errorDiot, setErrorDiot] = useState("");
+  const [paginaDiot, setPaginaDiot] = useState(1);
 
   const cargarDiot = async () => {
     setCargandoDiot(true);
@@ -93,6 +95,7 @@ export default function ReportesGlobales() {
       });
       setDiotGrupos(Array.isArray(data?.grupos) ? data.grupos : []);
       setDiotGranTotal(data?.granTotal ?? 0);
+      setPaginaDiot(1);
     } catch (err) {
       setErrorDiot(obtenerMensajeErrorApi(err));
       setDiotGrupos([]);
@@ -108,26 +111,33 @@ export default function ReportesGlobales() {
   }, [tabActiva]);
 
   const exportarDiotCsv = (tipo) => {
-    // tipo: "empresa" | "usuario"
-    const filas = [["RFC", "Razón Social", "Facturas", "Tipo de Gasto", "Estado", "Total Acumulado"]];
-    diotGrupos.forEach((g) => {
-      const sub = g[tipo];
-      if (!sub) return;
-      filas.push([g.rfc, g.razonSocial, sub.facturas, sub.tipoGasto, sub.estado, sub.total]);
-    });
-    if (filas.length === 1) {
-      addToast(`No hay registros de ${tipo === "empresa" ? "Empresa" : "Usuario"} para exportar.`, "warning");
-      return;
-    }
-    const csv = filas.map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `diot-${tipo}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  // tipo: "empresa" | "usuario"
+  const filas = [["RFC", "Razón Social", "Facturas", "Tipo de Gasto", "Estado", "IVA Acumulado", "Total Acumulado"]];
+  diotGrupos.forEach((g) => {
+    const sub = g[tipo];
+    if (!sub) return;
+    filas.push([g.rfc, g.razonSocial, sub.facturas, sub.tipoGasto, sub.estado, sub.iva, sub.total]);
+  });
+  if (filas.length === 1) {
+    addToast(`No hay registros de ${tipo === "empresa" ? "Empresa" : "Usuario"} para exportar.`, "warning");
+    return;
+  }
+  const csv = filas.map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `diot-${tipo}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+  const diotGruposPaginados = diotGrupos.slice(
+  (paginaDiot - 1) * REGISTROS_POR_PAGINA,
+  paginaDiot * REGISTROS_POR_PAGINA
+);
+
+const totalPaginasDiot = Math.max(1, Math.ceil(diotGrupos.length / REGISTROS_POR_PAGINA));
 
   // =========================================================================
   // TAB: Facturas a Solicitar / Recibos a Emitir
@@ -140,6 +150,8 @@ export default function ReportesGlobales() {
   const [errorPendientes, setErrorPendientes] = useState("");
   const [paginaPendientes, setPaginaPendientes] = useState(1);
   const [exportandoPdfPendientes, setExportandoPdfPendientes] = useState(false);
+  const [warningPendientes, setWarningPendientes] = useState(false); // 👈 NUEVO
+
 
   const cargarPendientes = async () => {
     setCargandoPendientes(true);
@@ -153,6 +165,7 @@ export default function ReportesGlobales() {
         },
       });
       setPendientes(Array.isArray(data?.pendientes) ? data.pendientes : []);
+      setWarningPendientes(Boolean(data?.warning)); // 👈 NUEVO
       setPaginaPendientes(1);
     } catch (err) {
       setErrorPendientes(obtenerMensajeErrorApi(err));
@@ -427,6 +440,75 @@ export default function ReportesGlobales() {
     }
   };
 
+  // =========================================================================
+// TAB: Presupuesto por Usuario (solo lectura para el administrador)
+// =========================================================================
+const [presupuesto, setPresupuesto] = useState(null);
+const [cargandoPresupuesto, setCargandoPresupuesto] = useState(false);
+const [errorPresupuesto, setErrorPresupuesto] = useState("");
+const [paginaPresupuesto, setPaginaPresupuesto] = useState(1);
+
+const cargarPresupuesto = async () => {
+  setCargandoPresupuesto(true);
+  setErrorPresupuesto("");
+  try {
+    const { data } = await api.get("/gastos/obtener");
+    setPresupuesto(data);
+    setPaginaPresupuesto(1);
+  } catch (err) {
+    setErrorPresupuesto(obtenerMensajeErrorApi(err));
+    setPresupuesto(null);
+  } finally {
+    setCargandoPresupuesto(false);
+  }
+};
+
+useEffect(() => {
+  if (tabActiva === "presupuesto") cargarPresupuesto();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [tabActiva]);
+
+const exportarPresupuestoCsv = () => {
+  if (!presupuesto || presupuesto.empleados.length === 0) {
+    addToast("No hay registros para exportar.", "warning");
+    return;
+  }
+  const filas = [["Número Empleado", "Nombre", "RFC", "Correo", "Límite Asignado"]];
+  presupuesto.empleados.forEach((e) => {
+    filas.push([
+      e.numeroEmpleado,
+      `${e.nombre} ${e.apellidoPaterno} ${e.apellidoMaterno || ""}`.trim(),
+      e.rfc,
+      e.correo,
+      e.limiteGasto,
+    ]);
+  });
+  filas.push([]);
+  filas.push(["Límite Empresarial Total", "", "", "", presupuesto.limiteEmpresarial]);
+
+  const csv = filas.map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "presupuesto-por-usuario.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+
+const empleadosPaginados = presupuesto
+  ? presupuesto.empleados.slice(
+      (paginaPresupuesto - 1) * REGISTROS_POR_PAGINA,
+      paginaPresupuesto * REGISTROS_POR_PAGINA
+    )
+  : [];
+
+const totalPaginasPresupuesto = presupuesto
+  ? Math.max(1, Math.ceil(presupuesto.empleados.length / REGISTROS_POR_PAGINA))
+  : 1;
+
+
   return (
     <div className="panel-container">
       {/* ---------- Sidebar (administrador) ---------- */}
@@ -508,6 +590,14 @@ export default function ReportesGlobales() {
             >
               Contabilidad General
             </button>
+
+            <button
+  className={`rg-tab ${tabActiva === "presupuesto" ? "rg-tab--activo" : ""}`}
+  onClick={() => setTabActiva("presupuesto")}
+>
+  Presupuesto por Usuario
+</button>
+
           </div>
 
           {/* ==================================================================
@@ -576,6 +666,7 @@ export default function ReportesGlobales() {
                       <th>Facturas</th>
                       <th>Tipo de Gasto</th>
                       <th>Estado</th>
+                       <th className="rg-col-derecha">IVA Acumulado</th>
                       <th className="rg-col-derecha">Total Acumulado</th>
                     </tr>
                   </thead>
@@ -593,76 +684,116 @@ export default function ReportesGlobales() {
                     )}
 
                     {!cargandoDiot &&
-                      diotGrupos.map((g) => (
-                        <React.Fragment key={g.rfc}>
-                          <tr className="rg-fila-grupo">
-                            <td colSpan={5}>{g.rfc} — {g.razonSocial}</td>
-                            <td className="rg-col-derecha">{formatoMoneda(g.totalGrupo)}</td>
-                          </tr>
+  diotGruposPaginados.map((g) => (
+    <React.Fragment key={g.rfc}>
+      <tr className="rg-fila-grupo">
+        <td colSpan={6}>{g.rfc} — {g.razonSocial}</td>
+        <td className="rg-col-derecha">{formatoMoneda(g.totalGrupo)}</td>
+      </tr>
 
-                          <tr>
-                            <td className="rg-texto-gris">Empresa</td>
-                            <td>{g.empresa ? g.razonSocial : "—"}</td>
-                            <td>{g.empresa ? g.empresa.facturas : 0}</td>
-                            <td>
-                              {g.empresa ? (
-                                <span className="rg-badge-tipo">{g.empresa.tipoGasto}</span>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td>
-                              {g.empresa ? (
-                                <span className={`rg-badge-estado rg-badge-estado--${g.empresa.estado.toLowerCase().replace(" ", "-")}`}>
-                                  {g.empresa.estado}
-                                </span>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="rg-col-derecha">
-                              {g.empresa ? formatoMoneda(g.empresa.total) : formatoMoneda(0)}
-                            </td>
-                          </tr>
+      <tr>
+        <td className="rg-texto-gris">Empresa</td>
+        <td>{g.empresa ? g.razonSocial : "—"}</td>
+        <td>{g.empresa ? g.empresa.facturas : 0}</td>
+        <td>
+          {g.empresa ? (
+            <span className="rg-badge-tipo">{g.empresa.tipoGasto}</span>
+          ) : (
+            "—"
+          )}
+        </td>
+        <td>
+          {g.empresa ? (
+            <span className={`rg-badge-estado rg-badge-estado--${g.empresa.estado.toLowerCase().replace(" ", "-")}`}>
+              {g.empresa.estado}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
+        <td className="rg-col-derecha">
+          {g.empresa ? formatoMoneda(g.empresa.iva) : formatoMoneda(0)}
+        </td>
+        <td className="rg-col-derecha">
+          {g.empresa ? formatoMoneda(g.empresa.total) : formatoMoneda(0)}
+        </td>
+      </tr>
 
-                          <tr>
-                            <td className="rg-texto-gris">Usuario</td>
-                            <td>{g.usuario ? g.razonSocial : "—"}</td>
-                            <td>{g.usuario ? g.usuario.facturas : 0}</td>
-                            <td>
-                              {g.usuario ? <span className="rg-badge-tipo">{g.usuario.tipoGasto}</span> : "—"}
-                            </td>
-                            <td>
-                              {g.usuario ? (
-                                <span className={`rg-badge-estado rg-badge-estado--${g.usuario.estado.toLowerCase().replace(" ", "-")}`}>
-                                  {g.usuario.estado}
-                                </span>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="rg-col-derecha">
-                              {g.usuario ? formatoMoneda(g.usuario.total) : formatoMoneda(0)}
-                            </td>
-                          </tr>
-                        </React.Fragment>
-                      ))}
+      <tr>
+        <td className="rg-texto-gris">Usuario</td>
+        <td>{g.usuario ? g.razonSocial : "—"}</td>
+        <td>{g.usuario ? g.usuario.facturas : 0}</td>
+        <td>
+          {g.usuario ? <span className="rg-badge-tipo">{g.usuario.tipoGasto}</span> : "—"}
+        </td>
+        <td>
+          {g.usuario ? (
+            <span className={`rg-badge-estado rg-badge-estado--${g.usuario.estado.toLowerCase().replace(" ", "-")}`}>
+              {g.usuario.estado}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
+        <td className="rg-col-derecha">
+          {g.usuario ? formatoMoneda(g.usuario.iva) : formatoMoneda(0)}
+        </td>
+        <td className="rg-col-derecha">
+          {g.usuario ? formatoMoneda(g.usuario.total) : formatoMoneda(0)}
+        </td>
+      </tr>
+    </React.Fragment>
+  ))}
                   </tbody>
 
                   {!cargandoDiot && diotGrupos.length > 0 && (
-                    <tfoot>
-                      <tr>
-                        <td colSpan={5} className="rg-pie-etiqueta">
-                          Gran Total Reporte
-                        </td>
-                        <td className="rg-pie-total rg-col-derecha">{formatoMoneda(diotGranTotal)}</td>
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
-              </div>
-            </section>
-          )}
+  <tfoot>
+    <tr>
+      <td colSpan={6} className="rg-pie-etiqueta">
+        Gran Total Reporte
+      </td>
+      <td className="rg-pie-total rg-col-derecha">{formatoMoneda(diotGranTotal)}</td>
+    </tr>
+  </tfoot>
+)}
+</table>
+</div>
+
+{!cargandoDiot && diotGrupos.length > 0 && (
+  <div className="rg-paginacion">
+    <span className="rg-paginacion-resumen">
+      Mostrando {(paginaDiot - 1) * REGISTROS_POR_PAGINA + 1} -{" "}
+      {Math.min(paginaDiot * REGISTROS_POR_PAGINA, diotGrupos.length)} de {diotGrupos.length} RFC
+    </span>
+    <div className="rg-paginacion-controles">
+      <button
+        className="rg-paginacion-flecha"
+        onClick={() => setPaginaDiot((p) => Math.max(p - 1, 1))}
+        disabled={paginaDiot === 1}
+      >
+        ‹
+      </button>
+      {Array.from({ length: totalPaginasDiot }, (_, i) => i + 1).map((n) => (
+        <button
+          key={n}
+          className={`rg-paginacion-numero ${n === paginaDiot ? "rg-paginacion-numero--activo" : ""}`}
+          onClick={() => setPaginaDiot(n)}
+        >
+          {n}
+        </button>
+      ))}
+      <button
+        className="rg-paginacion-flecha"
+        onClick={() => setPaginaDiot((p) => Math.min(p + 1, totalPaginasDiot))}
+        disabled={paginaDiot === totalPaginasDiot}
+      >
+        ›
+      </button>
+    </div>
+  </div>
+)}
+</section>
+)}
 
           {/* ==================================================================
               TAB: Facturas a Solicitar / Recibos a Emitir
@@ -726,6 +857,18 @@ export default function ReportesGlobales() {
               </div>
 
               {errorPendientes && <div className="rg-alerta rg-alerta--error">{errorPendientes}</div>}
+
+              {warningPendientes && (
+                <div className="rg-warning">
+                  <span className="rg-warning-icono">⚠️</span>
+                  <span>
+                    <strong>Aviso de cierre próximo:</strong> hay facturas o recibos pendientes de emitir
+                    y quedan 5 días o menos para el cierre mensual.
+                  </span>
+                </div>
+              )}
+
+              
 
               <div className="rg-tabla-responsive">
                 <table className="rg-tabla">
@@ -988,6 +1131,112 @@ export default function ReportesGlobales() {
                     </div>
                   )}
                </>
+              )}
+            </section>
+          )}
+        {/* ==================================================================
+              TAB: Presupuesto por Usuario (SOLO LECTURA)
+              ================================================================== */}
+          {tabActiva === "presupuesto" && (
+            <section className="rg-panel">
+              <div className="rg-panel-header">
+                <div>
+                  <span className="rg-breadcrumb">Reportes › Presupuesto por Usuario</span>
+                  <h2 className="rg-panel-titulo">Presupuesto Asignado (solo lectura)</h2>
+                </div>
+                <div className="rg-panel-acciones">
+                  <button className="rg-btn rg-btn--secundario" onClick={exportarPresupuestoCsv}>
+                    Exportar CSV
+                  </button>
+                </div>
+              </div>
+
+              {errorPresupuesto && <div className="rg-alerta rg-alerta--error">{errorPresupuesto}</div>}
+
+              {cargandoPresupuesto && <div className="rg-sin-resultados">Cargando...</div>}
+
+              {!cargandoPresupuesto && presupuesto && (
+                <>
+                  <div className="rg-tarjetas-contables">
+                    <div className="rg-tarjeta-contable rg-tarjeta-contable--resultado-positivo">
+                      <span className="rg-tarjeta-contable-titulo">Límite Empresarial Total</span>
+                      <span className="rg-tarjeta-contable-monto">
+                        {formatoMoneda(presupuesto.limiteEmpresarial)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rg-tabla-responsive">
+                    <table className="rg-tabla">
+                      <thead>
+                        <tr>
+                          <th>No. Empleado</th>
+                          <th>Nombre</th>
+                          <th>RFC</th>
+                          <th>Correo</th>
+                          <th className="rg-col-derecha">Límite Asignado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+  {presupuesto.empleados.length === 0 && (
+    <tr>
+      <td colSpan={5} className="rg-sin-resultados">
+        No hay usuarios activos con presupuesto asignado.
+      </td>
+    </tr>
+  )}
+  {empleadosPaginados.map((e) => (
+    <tr key={e.id}>
+      <td className="rg-texto-gris">{e.numeroEmpleado}</td>
+      <td className="rg-celda-usuario">
+        {e.nombre} {e.apellidoPaterno} {e.apellidoMaterno}
+      </td>
+      <td className="rg-texto-gris">{e.rfc}</td>
+      <td className="rg-texto-gris">{e.correo}</td>
+      <td className="rg-col-derecha">{formatoMoneda(e.limiteGasto)}</td>
+    </tr>
+  ))}
+</tbody>
+                    </table>
+                  </div>
+                  {presupuesto.empleados.length > 0 && (
+                    <div className="rg-paginacion">
+                      <span className="rg-paginacion-resumen">
+                        Mostrando {(paginaPresupuesto - 1) * REGISTROS_POR_PAGINA + 1} -{" "}
+                        {Math.min(paginaPresupuesto * REGISTROS_POR_PAGINA, presupuesto.empleados.length)} de{" "}
+                        {presupuesto.empleados.length} usuarios
+                      </span>
+                      <div className="rg-paginacion-controles">
+                        <button
+                          className="rg-paginacion-flecha"
+                          onClick={() => setPaginaPresupuesto((p) => Math.max(p - 1, 1))}
+                          disabled={paginaPresupuesto === 1}
+                        >
+                          ‹
+                        </button>
+                        {Array.from({ length: totalPaginasPresupuesto }, (_, i) => i + 1).map((n) => (
+                          <button
+                            key={n}
+                            className={`rg-paginacion-numero ${
+                              n === paginaPresupuesto ? "rg-paginacion-numero--activo" : ""
+                            }`}
+                            onClick={() => setPaginaPresupuesto(n)}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                        <button
+                          className="rg-paginacion-flecha"
+                          onClick={() => setPaginaPresupuesto((p) => Math.min(p + 1, totalPaginasPresupuesto))}
+                          disabled={paginaPresupuesto === totalPaginasPresupuesto}
+                        >
+                          ›
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                </>
               )}
             </section>
           )}

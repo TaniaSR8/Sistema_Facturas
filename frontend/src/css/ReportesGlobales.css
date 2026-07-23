@@ -620,3 +620,28 @@ html, body, #root {
 @media (max-width: 1000px) {
   .rg-tarjetas-contables { grid-template-columns: 1fr; }
 }
+
+
+/* ---------- Warning (aviso de cierre próximo) ---------- */
+.rg-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  background-color: #ffcccc;
+  border: 1px solid #cc0000;
+  color: #660000;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.rg-warning-icono {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .rg-warning { flex-direction: column; gap: 0.4rem; }
+}

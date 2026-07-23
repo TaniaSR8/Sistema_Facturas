@@ -11,7 +11,8 @@ import { useToast } from "../components/Toast";
 
 import { getDeducciones } from "../services/deduccionesService";
 
-const TIPOS_GASTO = [
+// Respaldo por si falla la carga desde el backend
+const TIPOS_GASTO_RESPALDO = [
   { codigo: "G01", descripcion: "Adquisición de mercancías" },
   { codigo: "G02", descripcion: "Devoluciones, descuentos o bonificaciones" },
   { codigo: "G03", descripcion: "Gastos en general" },
@@ -23,7 +24,8 @@ const TIPOS_GASTO = [
   { codigo: "CP01", descripcion: "Pagos" },
 ];
 
-const FORMAS_PAGO = [
+// Respaldo por si falla la carga desde el backend
+const FORMAS_PAGO_RESPALDO = [
   { codigo: "01", descripcion: "Efectivo" },
   { codigo: "02", descripcion: "Cheque nominativo" },
   { codigo: "03", descripcion: "Transferencia electrónica" },
@@ -75,6 +77,12 @@ function USubirFoto() {
   const [deducciones, setDeducciones] = useState(DEDUCCIONES_RESPALDO);
   const [cargandoDeducciones, setCargandoDeducciones] = useState(true);
 
+  // 👇 NUEVO — Opciones de "Tipo de Gasto" (tabla tipos_gasto), ya no hardcodeadas
+  const [tiposGasto, setTiposGasto] = useState(TIPOS_GASTO_RESPALDO);
+
+   // 👇 NUEVO — Opciones de "Forma de Pago" (tabla medios_pago), ya no hardcodeadas
+  const [mediosPago, setMediosPago] = useState(FORMAS_PAGO_RESPALDO);
+
   // Formulario
   const [tipoGasto, setTipoGasto] = useState("G03");
   const [monto, setMonto] = useState("");
@@ -104,6 +112,38 @@ function USubirFoto() {
       }
     };
     cargarDeducciones();
+  }, []);
+
+  // 👇 NUEVO — carga los tipos de gasto reales desde la base de datos
+  useEffect(() => {
+    const cargarTiposGasto = async () => {
+      try {
+        const { data } = await api.get("/facturas/catalogos/tipos-gasto");
+        if (Array.isArray(data) && data.length > 0) {
+          setTiposGasto(data);
+        }
+      } catch (err) {
+        console.warn("No se pudieron cargar los tipos de gasto desde el backend, usando respaldo local.", err);
+        setTiposGasto(TIPOS_GASTO_RESPALDO);
+      }
+    };
+    cargarTiposGasto();
+  }, []);
+
+  // 👇 NUEVO — carga las formas de pago reales desde la base de datos
+  useEffect(() => {
+    const cargarMediosPago = async () => {
+      try {
+        const { data } = await api.get("/facturas/catalogos/medios-pago");
+        if (Array.isArray(data) && data.length > 0) {
+          setMediosPago(data);
+        }
+      } catch (err) {
+        console.warn("No se pudieron cargar las formas de pago desde el backend, usando respaldo local.", err);
+        setMediosPago(FORMAS_PAGO_RESPALDO);
+      }
+    };
+    cargarMediosPago();
   }, []);
 
   useEffect(() => {
@@ -388,7 +428,7 @@ function USubirFoto() {
                   <div className="usf-campo">
                     <label htmlFor="tipoGasto">Tipo de Gasto</label>
                     <select id="tipoGasto" value={tipoGasto} onChange={(e) => setTipoGasto(e.target.value)}>
-                      {TIPOS_GASTO.map((t) => (
+                      {tiposGasto.map((t) => (
                         <option key={t.codigo} value={t.codigo}>{t.descripcion}</option>
                       ))}
                     </select>
@@ -414,7 +454,7 @@ function USubirFoto() {
                     <label htmlFor="formaPago">Forma de Pago <span className="usf-requerido">*</span></label>
                     <select id="formaPago" value={formaPago} onChange={(e) => setFormaPago(e.target.value)}>
                       <option value="">Seleccionar</option>
-                      {FORMAS_PAGO.map((f) => (
+                      {mediosPago.map((f) => (
                         <option key={f.codigo} value={f.codigo}>{f.descripcion}</option>
                       ))}
                     </select>

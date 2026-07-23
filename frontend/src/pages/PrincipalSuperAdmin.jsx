@@ -385,6 +385,17 @@ useEffect(() => {
         usuario={usuarioSeleccionado}
         onSave={handleEditarUsuario}
       />
+
+      <ModalConfirmacion
+  isOpen={modalConfirm.isOpen}
+  type={modalConfirm.type}
+  title={modalConfirm.title}
+  message={modalConfirm.message}
+  subMessage={modalConfirm.subMessage}
+  onClose={() => setModalConfirm((prev) => ({ ...prev, isOpen: false }))}
+  onConfirm={modalConfirm.onConfirm}
+/>
+
     </div>
   );
 }

@@ -12,6 +12,9 @@ import { getDeducciones } from "../services/deduccionesService";
 // Se llama como ruta relativa porque baseURL ya es http://localhost:3001/api
 const ENDPOINT_FACTURA = "/facturas/subir";
 
+const formatoMoneda = (valor) =>
+  Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+
 export default function USubirFactura() {
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -41,6 +44,11 @@ export default function USubirFactura() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
+
+    const [warningCierre, setWarningCierre] = useState(false); // 👈 NUEVO
+  const [totalReembolso, setTotalReembolso] = useState(0);    // 👈 NUEVO
+
+
   const [menuAbierto, setMenuAbierto] = useState(false); // menú de 3 puntos de la tarjeta
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false); // hamburguesa del sidebar
 
@@ -154,6 +162,24 @@ export default function USubirFactura() {
     fetchDeducciones();
   }, []);
 
+  // 👇 NUEVO — consulta si hay aviso de cierre próximo para este usuario
+  useEffect(() => {
+    const cargarAvisoCierre = async () => {
+      try {
+        const usuarioId = localStorage.getItem("usuarioId");
+        if (!usuarioId) return;
+        const { data } = await api.get("/facturas/dashboard", {
+          params: { usuarioId, porPagina: 1 },
+        });
+        setWarningCierre(Boolean(data?.warning));
+        setTotalReembolso(data?.totalReembolso || 0);
+      } catch (err) {
+        console.warn("No se pudo verificar el aviso de cierre próximo.", err);
+      }
+    };
+    cargarAvisoCierre();
+  }, []);
+
   return (
     <div className="panel-container">
       {/* ---------- Sidebar ---------- */}
@@ -238,16 +264,18 @@ export default function USubirFactura() {
             <p className="usf-page-subtitulo">Administra y valida los comprobantes fiscales.</p>
           </div>
 
-          <div className="usf-alerta usf-alerta--advertencia">
-            <span className="usf-alerta-icono">⚠️</span>
-            <div className="usf-alerta-texto">
-              <strong>Pendiente la emisión del recibo de los gastos.</strong>
-              <span>
-                Aviso generado 5 días antes del corte mensual. Por favor, cargue sus archivos a la
-                brevedad.
-              </span>
+          {warningCierre && (
+            <div className="usf-alerta usf-alerta--advertencia">
+              <span className="usf-alerta-icono">⚠️</span>
+              <div className="usf-alerta-texto">
+                <strong>Aviso de cierre próximo.</strong>
+                <span>
+                  Tienes {formatoMoneda ? formatoMoneda(totalReembolso) : `$${totalReembolso}`} facturado
+                  a tu nombre. Solicita tu recibo antes del cierre mensual.
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {error && <div className="usf-alerta usf-alerta--error">{error}</div>}
           {exito && <div className="usf-alerta usf-alerta--exito">{exito}</div>}
